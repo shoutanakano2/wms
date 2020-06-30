@@ -26,4 +26,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+    
+    public function warehouses(){
+        return $this->hasMany(Warehouse::class);
+    }
+    public function items(){
+        return $this->hasMany(Item::class);
+    }
 }
