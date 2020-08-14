@@ -72,9 +72,9 @@ class WarehousesController extends Controller
     }
     public function in(Request $request,$id){
         $warehouse=\App\Warehouse::find($id);
-        $warehouse->id=$request->id;
-        $warehouse->warehouse_code=$request->warehouse_code;
-        $warehouse->save();
+        //$warehouse->id=$request->id;
+        //$warehouse->warehouse_code=$request->warehouse_code;
+        //$warehouse->save();
         return view('processing.in',['warehouse'=>$warehouse,]);
     }
     
@@ -89,9 +89,9 @@ class WarehousesController extends Controller
     }
     public function out(Request $request,$id){
         $warehouse=\App\Warehouse::find($id);
-        $warehouse->id=$request->id;
-        $warehouse->warehouse_code=$request->warehouse_code;
-        $warehouse->save();
+        //$warehouse->id=$request->id;
+        //$warehouse->warehouse_code=$request->warehouse_code;
+        //$warehouse->save();
         return view('processing.out',['warehouse'=>$warehouse,]);
     }
     
