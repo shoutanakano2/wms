@@ -1,13 +1,13 @@
 <?php
 
 namespace App;
-
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Warehouse extends Model
 {
-    //
-    protected $fillable=['user_id','warehouse_code','warehouse_name'];
+    use SoftDeletes;
+    protected $fillable=['user_id','warehouse_code','warehouse_name','deleted_at'];
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -15,7 +15,6 @@ class Warehouse extends Model
     public function having(){
         //return $this->belongsToMany(Item::class,'stocks','warehouse_id','item_id')->using(Stock::class)->withTimestamps();
         return $this->belongsToMany(Item::class,'stocks','warehouse_id','item_id')->using(Stock::class)->withTimestamps()->withPivot("id");;
-        
     }
     
     public function matching($itemid,$stocks_id,$date,$quantity){
@@ -47,9 +46,6 @@ class Warehouse extends Model
             //$stocks_id=$warehouse->matching($itemid);
             //$stocks=\App\Stock::find($stocks_id);
             //$stock=$this->matchedStock($itemid);
-            
-            
-
             return true;
         }
     }

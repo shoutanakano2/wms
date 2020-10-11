@@ -1,18 +1,31 @@
-@extends('layouts.app')
+@extends('layouts.app2')
 
 @section('content')
-    <h1>倉庫選択</h1>
-        <ul class='list-instyled'>
+    <div class='text-center my-4'>
+        <h1>入出庫履歴照会</h1>
+    </div>
+    <h2 class='my-4'>倉庫選択</h2>
+        <table border="1" class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-center">倉庫コード</th>
+                    <th scope="col" class="text-center">倉庫名称</th>
+                </tr>
+            </thead>
            @foreach($warehouses as $warehouse)
-                <li>
-                    {!! Form::open(['route'=>['stocks.history','id'=>$warehouse->id],'method' =>'get']) !!}
-                        {!! Form::hidden('warehouse_code', $warehouse->warehouse_code) !!}
-                        {!! Form::submit($warehouse->warehouse_code,['class'=>'btn btn-danger btn-sm']) !!}
-                    {!! Form::close() !!}
-                    {!! $warehouse->warehouse_name !!}
-                    
-                </li>
+               <tbody class="text-center">
+                    <tr>
+                        <td>
+                            {!! Form::open(['route'=>['histories.list','id'=>$warehouse->id],'method' =>'get']) !!}
+                                {!! Form::hidden('warehouse_code', $warehouse->warehouse_code) !!}
+                                {!! Form::submit($warehouse->warehouse_code,['class'=>'btn btn-outline-dark btn-sm']) !!}
+                            {!! Form::close() !!}
+                        </td>
+                        <td>
+                            {!! $warehouse->warehouse_name !!}
+                        </td>
+                    </tr>
+                </tbody>
             @endforeach
-        </ul>
     {{ $warehouses->links('pagination::bootstrap-4') }}
 @endsection

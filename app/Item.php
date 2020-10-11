@@ -1,12 +1,13 @@
 <?php
 
 namespace App;
-
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Item extends Model
 {
-    protected $fillable=['user_id','item_code','item_name'];
+    use SoftDeletes;
+    protected $fillable=['user_id','item_code','item_name','sell_price','purchase_price','deleted_at'];
     public function user(){
         return $this->belongsTo(User::class);
     }

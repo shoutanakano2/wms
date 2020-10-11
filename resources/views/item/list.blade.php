@@ -1,20 +1,48 @@
-@extends('layouts.app')
+@extends('layouts.app2')
 
 @section('content')
-    <h1>品目マスタ一覧</h1>
-        <ul class='list-instyled'>
-           @foreach($items as $item)
-                <li>
-                    {!! $item->item_code !!}
-                    {!! $item->item_name !!}
-                    {!! link_to_route('items.edit','編集',['id'=>$item->id]) !!}
-                    @if(Auth::id()==$item->user_id)
-                        {!! Form::open(['route'=>['items.destroy','id'=>$item->id],'method' =>'delete']) !!}
-                            {!! Form::submit('削除',['class'=>'btn btn-danger btn-sm']) !!}
+    <h1 class="my-4">品目マスタ一覧</h1>
+        @if(session('flash_message'))
+            <div class='flash_message alert alert-danger m-2' role='alert'>
+                {{ session('flash_message') }}
+            </div>
+        @endif
+        <table border="1" class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-center">品目コード</th>
+                    <th scope="col" class="text-center">品目名称</th>
+                    <th scope="col" class="text-center">売値</th>
+                    <th scope="col" class="text-center">仕入値</th>
+                    <th scope="col" class="text-center">編集</th>
+                    <th scope="col" class="text-center">削除</th>
+                </tr>
+            </thead>
+            @foreach($items as $item)
+                <tbody class="text-center">
+                    <tr>
+                        <td>{!! $item->item_code !!}</td>
+                        <td>{!! $item->item_name !!}</td>
+                        <td>{!! $item->sell_price !!}</td>
+                        <td>{!! $item->purchase_price !!}</td>
+                        @if(Auth::id()==$item->user_id)
+                        <td>
+                        {!! Form::open(['route'=>['items.edit','id'=>$item->id],'method' =>'get']) !!}
+                            {!! Form::submit('編集',['class'=>'btn btn-outline-primary ']) !!}
                         {!! Form::close() !!}
-                    @endif
-                </li>
+                        </td>  
+                        @endif
+                        @if(Auth::id()==$item->user_id)
+                        <td>
+                        {!! Form::open(['route'=>['items.destroy','id'=>$item->id],'method' =>'delete']) !!}
+                            {!! Form::submit('削除',['class'=>'btn btn-outline-danger']) !!}
+                        {!! Form::close() !!}
+                        </td>
+                        @endif
+                    </tr>
+                </tbody>
             @endforeach
-        </ul>
+        </table>
+
     {{ $items->links('pagination::bootstrap-4') }}
 @endsection

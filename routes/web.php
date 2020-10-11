@@ -29,22 +29,25 @@ Route::group(['middleware'=>'auth'],function(){
    Route::get('outselect','WarehousesController@outselect')->name('warehouses.outselect');
    Route::get('warehouse/{id}/out','WarehousesController@out')->name('warehouses.out');
    Route::post('stocks/{id}/out','StocksController@out')->name('stocks.out');
+   Route::get('deleteselect','WarehousesController@deleteselect')->name('warehouses.deleteselect');
+   Route::get('warehouse/{id}/delete','WarehousesController@delete')->name('warehouses.delete');
+   Route::get('histories/{id}/delete','StocksController@delete')->name('histories.delete');
    
    Route::resource('warehouses','WarehousesController');
    Route::resource('items','ItemsController');
-   Route::resource('stocks','StocksController');
+   Route::resource('customers','CustomersController');
    
-   Route::get('stocks/select','StocksController@show')->name('stocks.show');
+   Route::get('stocks/select','StocksController@warehouse_select')->name('warehouses.stocksSelect');
    Route::get('stocks/{id}/list','StocksController@show')->name('stocks.show');
+   Route::get('stocks/{id}/pdf','StocksController@stocksPDF')->name('stocks.PDF');
+   Route::get('stocks/{id}/csv','StocksController@stocksCSV')->name('stocks.CSV');    
    
-   
-   Route::get('histories/select','StocksController@select')->name('stocks.select');
-   Route::get('histories/{id}/list','StocksController@history')->name('stocks.history');
-   
-   Route::get('/list/csv','StocksController@postCSV')->name('stocks.postCSV');
-   
-   Route::get('/sample', 'SampleController@index')->name('index.sample');
-   Route::get('/sample/export{keyword?}', 'SampleController@export')->name('export.sample');
-   
-   
+   Route::get('histories/select','StocksController@historiesSelect')->name('warehouses.historiesSelect');
+   Route::get('histories/{id}/list','StocksController@history')->name('histories.list');
+   Route::get('histories/{id}/pdf','StocksController@historiesPDF')->name('histories.PDF');
+   Route::get('histories/{id}/csv','StocksController@historiesCSV')->name('histories.CSV'); 
+   Route::get('customerslist','CustomersController@list')->name('customers.list');
+   Route::get('inout', 'StocksController@inoutfile')->name('stocks.inoutfile');
+   Route::post('/import','StocksController@import')->name('stocks.import');
 });
+//php artisan serve --host=$IP --port=$PORT 

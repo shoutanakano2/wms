@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app2')
 @section('content')
     <div class='text-center'>
         <h1>在庫照会</h1>

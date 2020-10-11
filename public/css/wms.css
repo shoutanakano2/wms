@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+.hmax {
+    height: 100%;
+    margin: 0;
+}
+
+.fullheight {
+    height: 100%;
+    background: #bbddff;
+    margin: 0;
+}

@@ -18,7 +18,6 @@ class HistoriesForeignKey extends Migration
             $table->foreign('stocks_id')->references('id')->on('stocks');
         });
     }
-
     /**
      * Reverse the migrations.
      *
@@ -27,7 +26,6 @@ class HistoriesForeignKey extends Migration
     public function down()
     {
         Schema::table('histories', function (Blueprint $table) {
-            //
             $table->dropForeign('histories_stocks_id_foreign');
         });
     }

@@ -1,35 +1,26 @@
-@extends('layouts.app')
+@extends('layouts.app2')
+
 @section('content')
-    <div class='text-center'>
-        @if(Auth::check())
-            <h1>倉庫管理システム</h1>
-             <h2>１．マスタ関連</h2>
-            <div>
-                ①
-                {!! link_to_route('warehouses.create','倉庫マスタ作成',[]) !!}
-                
-                {!! link_to_route('warehouses.index','一覧', []) !!}
-                ②
-                {!! link_to_route('items.create','品目マスタ作成',[]) !!}
-                {!! link_to_route('items.index','一覧',[]) !!}
-                
+    <div id="carouselExampleControls" class="carousel slide" data-ride="carousel" data-interval="2500" data-pause="hover">
+          <div class="carousel-inner">
+            <div class="carousel-item active" style="background-color: red;">
+              <img src="/images/truck.jpg" class="d-block w-100" alt="truck">
             </div>
-            <h2>２．入出庫処理</h2>
-            <div>
-                ①
-                {!! link_to_route('warehouses.inselect','入庫処理',[]) !!}
-                ②
-                {!! link_to_route('warehouses.outselect','出庫処理',[]) !!}
+            <div class="carousel-item"  style="background-color: yellow;">
+              <img src="/images/warehouse.jpg" class="d-block w-100" alt="warehouse">
             </div>
-            <h2>３．在庫管理</h2>
-                ①
-                {!! link_to_route('stocks.index','在庫照会',[]) !!}
-                ②
-                {!! link_to_route('stocks.select','入出庫履歴照会',[]) !!}
-        @else
-            <h1>倉庫管理システム</h1>
-            {!! link_to_route('signup.get','会員登録',[],['class'=>'btn btn-lg btn-primary']) !!}
-            {!! link_to_route('login','ログイン',[],['class'=>'btn btn-lg btn-primary']) !!}
-        @endif
+            <div class="carousel-item"  style="background-color: blue;">
+              <img src="/images/norimono01_11.png" class="d-block w-100" alt="folklift">
+            </div>
+          </div>
+          <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+          </a>
+          <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+          </a>
     </div>
+
 @endsection

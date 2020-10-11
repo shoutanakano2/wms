@@ -1,29 +1,30 @@
-@extends('layouts.app')
+@extends('layouts.app2')
 @section('content')
     <div class='text-center'>
-        <h1>入庫処理</h1>
+        <h1 class='my-4'>入庫処理</h1>
     </div>
-    <p>倉庫名称</p>
-     {!! $warehouse->warehouse_code !!}
- {!! Form::open(['route'=>['stocks.matching',$warehouse->id]]) !!}
-    <table  border='1'>
+    <p>倉庫名称: {!! $warehouse->warehouse_code !!}</p>
+    {!! Form::open(['route'=>['stocks.matching',$warehouse->id]]) !!}
+    <table class='table table-striped' border='1'>
         <thead>
             <tr>
                 <th>入庫日付</th>
+                <th>仕入先コード</th>
                 <th>品目コード</th>
                 <th>数量</th>
             </tr>
         </thead>
-        
         <tbody class='form-group'>
             <tr>
                 <td>{!! Form::date('date',null,['class'=>'form-control']) !!}</td>
-                <td>{!! Form::text('item_code',null,['class'=>'form-control']) !!}</td>
+                <td>{!! Form::select('customer_code',$customers,null,['class'=>'form-control']) !!}</td>
+                <td>{!! Form::select('item_code',$items,null,['class'=>'form-control']) !!}</td>
                 <td>{!! Form::number('quantity',null,['class'=>'form-control']) !!}</td>
             </tr>
         </tbody>
     </table>
-     {!! Form::submit('入庫',['class'=>'btn btn-primary']) !!}
-    {!! Form::close() !!}
-    
+    <div class="float-right">
+        {!! Form::submit('入庫',['class'=>'btn btn-primary']) !!}
+        {!! Form::close() !!}
+    </div>
 @endsection

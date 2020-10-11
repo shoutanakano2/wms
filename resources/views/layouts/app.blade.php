@@ -7,11 +7,24 @@
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
     </head>
 
-    <body>
-        
+    <body class='bg-info'>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a class='navbar-brand' href='#'>倉庫管理システム</a>
+            <button class="navbar-togger" type="button" data-togger="collapse" data-target="navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-togger-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                    <div class="navbar-nav">
+                        
+                        <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
         <div class="container">
             @include('commons.error_messages')
-            
             @yield('content')
         </div>
         
