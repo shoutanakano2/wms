@@ -31,10 +31,11 @@ Route::group(['middleware'=>'auth'],function(){
    Route::post('stocks/{id}/out','StocksController@out')->name('stocks.out');
    Route::get('deleteselect','WarehousesController@deleteselect')->name('warehouses.deleteselect');
    Route::get('warehouse/{id}/delete','WarehousesController@delete')->name('warehouses.delete');
-   Route::get('histories/{id}/delete','StocksController@delete')->name('histories.delete');
+   Route::delete('histories/{id}/delete','StocksController@delete')->name('histories.delete');
    
    Route::resource('warehouses','WarehousesController');
    Route::resource('items','ItemsController');
+   //Route::resource('stocks','StocksController');
    Route::resource('customers','CustomersController');
    
    Route::get('stocks/select','StocksController@warehouse_select')->name('warehouses.stocksSelect');

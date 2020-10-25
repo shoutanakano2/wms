@@ -12,6 +12,7 @@
                     <th scope='col'>削除</th>
                 </tr>
             </thead>
+          
             @foreach($histories as $history)
                 <tbody>
                     <tr>

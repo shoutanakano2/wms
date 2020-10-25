@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests;
@@ -10,13 +9,13 @@ use Validator;
 use Goodby\CSV\Import\Standard\Lexer;
 use Goodby\CSV\Import\Standard\Interpreter;
 use Goodby\CSV\Import\Standard\LexerConfig;
-//require '/wms/vendor/autoload.php';
-
+use App\Stock;
+use App\Historie;
 class StocksController extends Controller
 {
     public function store(Request $request,$id){
         $this->validate($request,[
-            'date'=>'required',
+            'date'=>'required|after:Carbon::now()->startOfMonth()',
             'customer_code'=>'required',
             'item_code'=>'required',
             'quantity'=>'required|numeric|between:1,2147483647']);
@@ -44,13 +43,14 @@ class StocksController extends Controller
         $history->date=$request->date;
         $history->quantity=$request->quantity;
         $history->customer_id=$customerid;
+        $history->change_status='可';
         $history->save();
         Log::debug('入庫');
         return back();
     }
     public function out(Request $request,$id){
         $this->validate($request,[
-            'date'=>'required',
+            'date'=>'required|after:Carbon::now()->startOfMonth()',
             'customer_code'=>'required',
             'item_code'=>'required',
             'quantity'=>'required|integer|digits_between:1,2147483647']);
@@ -105,6 +105,7 @@ class StocksController extends Controller
                 $history->date=$request->date;
                 $history->quantity=$request->quantity;
                 $history->customer_id=$customerid;
+                $history->change_status='可';
                 $history->save();
                 return back();
             }
@@ -122,11 +123,6 @@ class StocksController extends Controller
     }
     public function show(Request $request,$id){
         $warehouse=\App\Warehouse::find($id);
-        //$stocks=$warehouse->stocks;
-        //$stocks=\DB::table('stocks')
-                    //->join('warehouses','stocks.warehouse_id','=','warehouses.id')
-                    //->join('items','stocks.item_id','=','items.id')
-                    //->get();
         $inoutSums = \DB::table('histories')
                         ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
                         ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
@@ -314,11 +310,10 @@ class StocksController extends Controller
                     ->join('stocks','histories.stocks_id','=','stocks.id')
                     ->join('items', 'items.id', '=', 'stocks.item_id')
                     ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
+                    ->select('histories.inout','histories.id','histories.date','warehouses.warehouse_name','items.item_name','histories.quantity','items.user_id')
                     ->where('warehouse_id', $warehouse->id)
                     ->orderBy('histories.date','ASC')
-                    ->paginate(15);
-        //$warehouse=$inoutSum->warehouse_name;
-        //$item=$inoutSum->item_name;
+                    ->paginate(25);
         $data=[
             'id'=>$id,
             'histories'=>$histories];
@@ -406,15 +401,21 @@ class StocksController extends Controller
     }
     public function delete($id){
         $history=\App\Historie::find($id);
-        if(\Auth::id()==$history->user_id){
+        $userid=\DB::table('histories')
+            ->join('stocks','histories.stocks_id','=','stocks.id')
+            ->join('items', 'items.id', '=', 'stocks.item_id')
+            ->select('items.user_id','histories.inout')
+            ->where('histories.id', $history->id)
+            ->first();
+        if(\Auth::id()==$userid->user_id && $history->change_status=='可'){
             $history->delete();
             return back();
         }
+        return back()->with('flash_message','取り消しできません。');
     }
-    protected $head;
-    protected $csvfilePath;
-
-    protected $csvimport=null;
+    //protected $head;
+    //protected $csvfilePath;
+    //protected $csvimport=null;
     //public function __construct(CSVimport $csvimport){
         //$this->csvimport=$csvimport;
     //}
@@ -422,14 +423,31 @@ class StocksController extends Controller
         return view('processing.import');
     }
     public function import(Request $request){
-        
+        //***** suda add start 2010.10.12 *****
+        if(!$request->hasFile('csv_file') ) {
+            return back()->with('flash_message','CSVファイルを選択して下さい。');
+        }
+        elseif(!$request->file('csv_file')->isValid()) {
+            return back()->with('flash_message','CSVファイルをが正しくありません。');
+        }    
+        //elseif($request->hasFile('csv_file') && $request->file('csv_file')->isValid()) {
+        else {
+            $request->file('csv_file')->move(public_path()."/storage/csv/",$_FILES['csv_file']['name']);
+            $file_path = public_path()."/storage/csv/".$_FILES['csv_file']['name'];
+            //dd($file_path);
+         }
+        //***** suda add end 2010.10.12 ******
+ 
         setlocale(LC_ALL,'ja_JP.UTF-8');
-        $uploaded_file=$request->file('csv_file');
-        $file_path=$request->file('csv_file')->path($uploaded_file);
+        //$uploaded_file=$request->file('csv_file');        
+        //$file_path=$request->file('csv_file')->path($uploaded_file);
+
         $file=new SplFileObject($file_path);
         $file->setFlags(SplFileObject::READ_CSV);
         $row_count=1;
-    
+        
+        //postで受け取ったcsvファイルデータ
+
         //Goodby CSVのconfig設定
         $config = new LexerConfig();
         $interpreter = new Interpreter();
@@ -442,91 +460,100 @@ class StocksController extends Controller
             $rows[] = $row;
         });
         // CSVデータをパース
-        $lexer->parse($file, $interpreter);
+        //$lexer->parse($file, $interpreter);
+        $lexer->parse($file_path, $interpreter);
+        
         $data = array();
         // CSVのデータを配列化
-        foreach ($rows as $key => $value) {
-            $arr = array();
+        foreach ($rows as  $value) {
+            $arr=[];
             foreach ($value as $k => $v) {
-                switch ($k) {
-        	    case 0:
-        	    $arr['倉庫名称'] = $v;
-        	    break;
-        	    case 1:
-        	    $arr['入出庫種別'] = $v;
-        	    break;
-        	   case 2:
-        	   $arr['日付']=$v;
-        	   break;
-        	   case 3:
-        	   $arr['得意先名称']=$v;
-        	   break;
-        	   case 4:
-        	   $arr['品目名称']=$v;
-        	   break;
-        	   case 5:
-        	   $arr['数量']=$v;
-        	   break;
-        	    default:
-        	    break;
+                Log::debug("*** " . $v);
+                if($v=='倉庫名称'){
+                    continue;}
+                if($v=='入出庫種別'){
+                    continue;}
+                if($v=='日付'){
+                    continue;}
+                if($v=='得意先名称'){
+                    continue;}
+                if($v=='品目名称'){
+                    continue;}
+                if($v=='数量'){
+                    continue;}
+                    
+                $csv_key[]=$k;
+                $csv_value[]=$v;
+                $column_name=[];
+                
+                if($k==0){
+                    $arr += [$k =>$v];}
+                if($k==1){
+                    $arr += [$k =>$v];}
+                    //$arr = array_merge($arr,array($k =>$v));
+                    //array_push($column_name,'入出庫種別');
+                    //array_push($csv_value,$v);
+                if($k==2){
+                    $arr += [$k =>$v];}
+                if($k==3){
+                    $arr += [$k =>$v];}
+                if($k==4){
+                    $arr += [$k =>$v];}
+                if($k==5){
+                    $arr += [$k =>$v];}
             }
         }
- dd($arr);
             //　バリデーション処理
             $validator = Validator::make($arr,[
-               'name' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255'
+                0 => 'required|exists:warehouses,warehouse_name',
+                1=> 'required|in:入庫,出庫',
+                2=>'required|date|after:Carbon::now()->startOfMonth();',
+                3=>'required|exists:customers,customer_name',
+                4=>'required|exists:items,item_name',
+                5=>'required|numeric|between:1,2147483647'
             ]);
- 
+
             if ($validator->fails()) {
-            $validator->errors()->add('line', $key);
-            return redirect('/sample')->withErrors($validator)->withInput();
-            }
- 
-            $data[] = $arr;
-        }
- 
+                $validator->errors()->add('line', $v);
+                //return view('processing.import')->withErrors($validator)->withInput();
+                return view('processing.import')->withErrors($validator);}
+        
+ //$fileでOK？→OKそう。
         foreach($file as $row){
             if($row===[null])continue;
             if($row_count>1)
             {
-              
-  
-        $warehouse_name=$row[0];
-        $warehouse=\App\Warehouse::where('warehouse_name',$row[0])->first();
-        
-        if($row[1]='入庫')
-        $inout='1';
-        elseif($row[2]='出庫')
-        $inout='2';
-        $date=$row[2];
-        $customer_name=$row[3];
-        $customer=\App\Customer::where('customer_name',$customer_name)->first();
-        $item_name=$row[4];
-        $item=\App\Item::where('item_name',$item_name)->first();
-        $quantity=$row[5];
-        $stock ='';
-        if ($warehouse->matched($item->id)) {
-        } else {
-            $stock = $warehouse->having()->attach($item->id);
-        }
-        $stock = $warehouse->matchedStock($item->id)->first()->pivot;
-        $stock_id=$stock->id;
-        
-        
-        $history = new \App\Historie();
-        $history->stocks_id=$stock_id;
-        $history->inout=$inout;
-        $history->date=$date;
-        $history->quantity=$quantity;
-        $history->customer_id=$customer->id;
-        $history->save();
-        return back();
+                $warehouse_name=$row[0];
+                $warehouse=\App\Warehouse::where('warehouse_name',$row[0])->first();
+                if($row[1]='入庫')
+                $inout='1';
+                elseif($row[2]='出庫')
+                $inout='2';
+                $date=$row[2];
+                $customer_name=$row[3];
+                $customer=\App\Customer::where('customer_name',$customer_name)->first();
+                $item_name=$row[4];
+                $item=\App\Item::where('item_name',$item_name)->first();
+                $quantity=$row[5];
+                $stock ='';
+                if ($warehouse->matched($item->id)) {
+                } else {
+                    $stock = $warehouse->having()->attach($item->id);}
+                $stock = $warehouse->matchedStock($item->id)->first()->pivot;
+                $stock_id=$stock->id;
+                $history = new \App\Historie();
+                $history->stocks_id=$stock_id;
+                $history->inout=$inout;
+                $history->date=$date;
+                $history->quantity=$quantity;
+                $history->customer_id=$customer->id;
+                $history->change_status='可';
+                $history->save();
+                return back();
             }
             $row_count++;
         }
         Log::debug('一括入出庫');
         return view('processing.import');
     }
-    
 }
