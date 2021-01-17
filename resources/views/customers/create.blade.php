@@ -27,12 +27,17 @@
                     {!! Form::email('customer_email',old('customer_email'),['class'=>'form-control']) !!}
                 </div>
                 <div class='form-group'>
-                    {!! Form::label('customer_postalcode','得意先郵便番号') !!}
-                    {!! Form::number('customer_postalcode',old('customer_postalcode'),['class'=>'form-control']) !!}
+                    {!! Form::label('customer_postalcode','郵便番号') !!}
+                    {!! Form::text('customer_postalcode',null,['class'=>'form-control','id'=>'zipcode','maxlength'=>'7']) !!}
+                    
+
                 </div>
+                <p>※7桁の半角数字で入力してください</p>
+                    <input type="button" id="search_btn" value="検索">
+                    <div id="zip_result"></div>
                 <div class='form-group'>
                     {!! Form::label('customer_address','得意先住所') !!}
-                    {!! Form::text('customer_address',old('customer_address'),['class'=>'form-control']) !!}
+                    {!! Form::text('customer_address',old('customer_address'),['class'=>'form-control','id'=>'zipname']) !!}
                 </div>
                 {!! Form::submit('登録',['class'=>'btn btn-primary btn-block']) !!}
             {!! Form::close() !!}

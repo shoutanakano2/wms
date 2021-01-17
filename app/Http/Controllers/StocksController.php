@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use App\Library\BaseClass;
 use App\Http\Requests;
 use App\CSVimport;
 use SplFileObject;
@@ -11,32 +12,45 @@ use Goodby\CSV\Import\Standard\Interpreter;
 use Goodby\CSV\Import\Standard\LexerConfig;
 use App\Stock;
 use App\Historie;
+use Carbon\Carbon;
 class StocksController extends Controller
 {
+    //入庫処理
     public function store(Request $request,$id){
+        Log::debug('入庫');
+        //バリデーション
         $this->validate($request,[
-            'date'=>'required|after:Carbon::now()->startOfMonth()',
+            'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
             'customer_code'=>'required',
             'item_code'=>'required',
             'quantity'=>'required|numeric|between:1,2147483647']);
+        // 通常のバリデーション
+        //$validator = Validator::make($request->all(), [
+	        //現在のばーりでーしょんのまま
+            //'date'=>'required|after:Carbon::now()->startOfMonth()->toDateString()',
+            //'customer_code'=>'required',
+            //'item_code'=>'required',
+            //'quantity'=>'required|numeric|between:1,2147483647']);
+        //$validator->validate();
+        // 追加で入力チェックを行う
+        //if ( $validator->fails() ) {
+            //$validator->errors()->add('feed_url', 'このURLにはRSSフィードが含まれていません。');
+            //return back()->withInput()->withErrors($validator);
+        //}
+        //投入された値から、DBに保存する値を求る。
         $warehouse=\App\Warehouse::find($id);
-        $customer=\App\Customer::where('customer_name',$request->customer_code)->first();
-        $customerid=$customer->id;
-        $item=\App\Item::where('item_name',$request->item_code)->first();
-        $itemid=$item->id;
+        $itemid = BaseClass::itemId($request,$id);
+        $customerid = BaseClass::customerId($request,$id);
         //$stocks=\App\Stock::where('item_id',$itemid)->where('warehouse_id',$id)->first();
+        //倉庫と品目の組み合わせがなければ、作成し、その変数を取得する。
         $stock ='';
         if ($warehouse->matched($itemid)) {
-            //$stock = $warehouse->matchedStock($itemid)->first()->pivot;
         } else {
             $stock = $warehouse->having()->attach($itemid);
         }
-        $stock = $warehouse->matchedStock($itemid)->first()->pivot;
-        //$warehouse->matching($itemid,$stock->id,$request->date,$request->quantity);
-        //$stocks = $warehouse->matchedStock($item->id);
-        $stock_id=$stock->id;
-        //$warehouse->matching($itemid,$stocks_id,$request->date,$request->quantity);
-        Log::debug('$stock');
+        $stock_id = BaseClass::stockId($warehouse,$itemid);
+        
+        //DBに値を保存する。
         $history = new \App\Historie();
         $history->stocks_id=$stock_id;
         $history->inout=1;
@@ -45,26 +59,28 @@ class StocksController extends Controller
         $history->customer_id=$customerid;
         $history->change_status='可';
         $history->save();
-        Log::debug('入庫');
-        return back();
+        return back()->with('flash_message','入庫完了しました。');
     }
+    
+    //出庫処理
     public function out(Request $request,$id){
+        Log::debug('出庫');
+        //バリデーション
         $this->validate($request,[
-            'date'=>'required|after:Carbon::now()->startOfMonth()',
+            'date'=>'required|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
             'customer_code'=>'required',
             'item_code'=>'required',
             'quantity'=>'required|integer|digits_between:1,2147483647']);
+        //投入された値から、DBに保存する値を求め、その値をDBに保存する。
         $warehouse=\App\Warehouse::find($id);
-        $item=\App\Item::where('item_name',$request->item_code)->first();
-        $itemid=$item->id;
-        $customer=\App\Customer::where('customer_name',$request->customer_code)->first();
-        $customerid=$customer->id;
+        $itemid = BaseClass::itemId($request,$id);
+        $customerid = BaseClass::customerId($request,$id);
+        
+        //入庫したことのない品目か、出庫処理できる在庫があるか確認する。、
         if($warehouse->matchedStock($itemid)->first()==Null){
-            return back();
-        }
-        else{
-            $stock = $warehouse->matchedStock($itemid)->first()->pivot;
-            $stock_id=$stock->id;
+            return back()->with('flash_message','在庫が有りません。');
+        }else{
+            $stock_id = BaseClass::stockId($warehouse,$itemid);
             $inoutSums = \DB::table('histories')
                 ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
                 ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
@@ -72,7 +88,9 @@ class StocksController extends Controller
                 ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
                 ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
                 ->where('warehouse_id', $warehouse->id)
+                ->where('item_id',$itemid)
                 ->get();
+            
             $inoutDatas=[];
             $OldwareHouse='';
             $Olditem='';
@@ -95,10 +113,12 @@ class StocksController extends Controller
                     $sum = $sum + $this->inoutVal($inoutSum->inout,$inoutSum->sum);
                 }
             }
-            if($sum<=$request->quantity){
+            array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
+            
+            //出庫可能な在庫が有れば、DBに値を保存する。
+            if($sum <= $request->quantity){
                 return back()->with('flash_message','在庫数量以上の出庫はできません。');
-            }
-            else{
+            }else{
                 $history = new \App\Historie();
                 $history->stocks_id=$stock_id;
                 $history->inout=2;
@@ -107,12 +127,14 @@ class StocksController extends Controller
                 $history->customer_id=$customerid;
                 $history->change_status='可';
                 $history->save();
-                return back();
+                return back()->with('flash_message','出庫完了しました。');
             }
-            Log::debug('出庫');
         }
     }
+    
+    //入出庫処理する倉庫を選択する。
     public function warehouse_select(){
+        Log::debug('倉庫選択');
         $data=[];
         if(\Auth::check()){
             $user=\Auth::user();
@@ -121,7 +143,11 @@ class StocksController extends Controller
             return view('stocks.stocks_select',$data);
         }
     }
+    
+    //在庫一覧を表示する。
     public function show(Request $request,$id){
+        Log::debug('在庫照会');
+        //倉庫、品種、入出庫の値が同じ組み合わせをリストアップ
         $warehouse=\App\Warehouse::find($id);
         $inoutSums = \DB::table('histories')
                         ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
@@ -130,6 +156,7 @@ class StocksController extends Controller
                         ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
                         ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
                         ->where('warehouse_id', $warehouse->id)
+                        ->dump()
                         ->paginate(15);
         
         //入出庫計算
@@ -138,7 +165,7 @@ class StocksController extends Controller
         $OldwareHouse='';
         $Olditem='';
         $sum=0;
-        
+    
         foreach($inoutSums as $inoutSum) {
             //１件目はイコールとする
             if($OldwareHouse=='') {
@@ -169,21 +196,14 @@ class StocksController extends Controller
         
         $data=[
             'inoutDatas' => $inoutDatas,
-            'id'=>$id,
-            ];
-        Log::debug('在庫照会');
+            'id'=>$id,];
         return view('stocks.show',$data);
     }
+    
+    //在庫をCSVデータとして取得する。
     public function stocksCSV(Request $request,$id){
-        $warehouse=\App\Warehouse::find($id);
-        $inoutSums = \DB::table('histories')
-                        ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
-                        ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
-                        ->join('items', 'items.id', '=', 'stocks.item_id')
-                        ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
-                        ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
-                        ->where('warehouse_id', $warehouse->id)
-                        ->get();
+        Log::debug('在庫照会CSV出力');
+        $inoutSums = BaseClass::inoutSums($id);
         $inoutDatas=[];
         $OldwareHouse='';
         $Olditem='';
@@ -209,43 +229,51 @@ class StocksController extends Controller
         }
         array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
         
-        echo gettype($inoutDatas) . "\n";
-        var_dump( is_array($inoutDatas) );
+        //echo gettype($inoutDatas) . "\n";
+        //var_dump( is_array($inoutDatas) );
         $head=['倉庫名称','品目名称','数量'];
         $csvlist = $this->stocksCsvColmns(); 
-        $f=fopen('test1.csv','w');
-        if($f){
+    
+        //$f=fopen('test1.csv','w');
+        $fp = fopen('test1.csv', 'w');
+        if($fp){
             mb_convert_variables('SJIS', 'UTF-8', $head);
-            fputcsv($f, $head);
+            fputcsv($fp, $head);
+            $inoutDatacsvs=[];
             
-            $inoutData=[];
             foreach($inoutDatas as $inoutData){
+            
                 $data=[];
-                foreach($csvlist as $key=>$value){
-                    $data[] = str_replace(array("\r\n", "\r", "\n"), '', $inoutData->$key);
+                foreach($inoutData as $key => $value){
+                    
+                    //dd($csvlist,$key,$value,$inoutData,$data);
+                    $data[] = str_replace(array("\r\n", "\r", "\n"), '', $value);
+                    //$data[] = $value;
                 }
+                $inoutDatacsvs[] = $data;
                 mb_convert_variables('SJIS', 'UTF-8', $data);
-                fputcsv($f, $data);
+                fputcsv($fp, $data);
             }
+       
+            //foreach ($inoutDatacsvs as $fields) {
+            //    mb_convert_variables('SJIS', 'UTF-8', $fields);
+            //    mb_convert_variables('SJIS-win', 'UTF-8', $fields);
+            //    fputcsv($fp, $fields);
+            //}
+            fclose($fp);
+        
+            //fclose($f);
         }
-        fclose($f);
         header("Content-Type: application/octet-stream");
         header('Content-Length: '.filesize('test1.csv'));
         header('Content-Disposition: attachment; filename=test1.csv');
         readfile('test1.csv');
-        Log::debug('在庫照会CSV出力');
     }
     
+    //在庫をPDFで取得する。
     public function stocksPdf(Request $request,$id){
-        $warehouse=\App\Warehouse::find($id);
-        $inoutSums = \DB::table('histories')
-                        ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
-                        ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
-                        ->join('items', 'items.id', '=', 'stocks.item_id')
-                        ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
-                        ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
-                        ->where('warehouse_id', $warehouse->id)
-                        ->get();
+        Log::debug('在庫照会PDF出力');
+        $inoutSums = BaseClass::inoutSums($id);
         $inoutDatas=[];
         $OldwareHouse='';
         $Olditem='';
@@ -272,10 +300,8 @@ class StocksController extends Controller
         array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
         $data=[
             'id'=>$id,
-            'inoutDatas' => $inoutDatas,
-            ];
-        return \PDF::loadView('stocks.show',$data)->setOption('encoding', 'utf-8')->inline();
-        Log::debug('在庫照会PDF出力');
+            'inoutDatas' => $inoutDatas,];
+        return \PDF::loadView('stocks.pdf',$data)->setOption('encoding', 'utf-8')->inline();
     }
     
     public function stocksCsvColmns()
@@ -283,19 +309,22 @@ class StocksController extends Controller
         $csvlist = array(
             'wareHouse' => '倉庫名称',
             'item' => '品目名称',
-            'sum' => '数量'
-        );
+            'sum' => '数量');
         return $csvlist;
     }
     
+    //入庫の場合は数量に×１、出庫の場合は数量に×(-1)
     public function inoutVal($inout,$val) {
         if($inout == "1") {
             return $val;
-        }
+        }else{
         return $val * -1;
+        }
     }
     
+    //入出庫履歴を確認する倉庫を選択
     public function historiesSelect(){
+        Log::debug('入出庫履歴を確認する倉庫を選択');
         $data=[];
         if(\Auth::check()){
             $user=\Auth::user();
@@ -304,7 +333,10 @@ class StocksController extends Controller
             return view('histories.histories_select',$data);
         }
     }
+    
+    //入出庫履歴を確認する。
     public function history(Request $request,$id){
+        Log::debug('入出庫履歴照会');
         $warehouse=\App\Warehouse::find($id);
         $histories=\DB::table('histories')
                     ->join('stocks','histories.stocks_id','=','stocks.id')
@@ -317,20 +349,23 @@ class StocksController extends Controller
         $data=[
             'id'=>$id,
             'histories'=>$histories];
-            Log::debug('入出庫履歴照会');
         return view('histories.list',$data);
     }
-    protected $histories = [];
-    public function all(){
-        return $this->histories;
-    }
+    
+    //protected $histories = [];
+    //public function all(){
+        //return $this->histories;
+    //}
     public function toArray(){
         return $this->map(function($histories){
-            return $histories instanceof Arrayable ? $value->toArray() : $histories;
+            //return $histories instanceof Arrayable ? $value->toArray() : $histories;
         })->all();
     }
     
+    
+    //入出庫履歴をCSVデータで取得
     public function historiesCSV(Request $request,$id){
+        Log::debug('入出庫履歴CSV取得');
         $warehouse=\App\Warehouse::find($id);
         $histories=\DB::table('histories')
                     ->join('stocks','histories.stocks_id','=','stocks.id')
@@ -368,8 +403,7 @@ class StocksController extends Controller
         readfile('test.csv');
         Log::debug('入出庫履歴照会CSV出力');
     }
-    public function csvcolmns()
-    {
+    public function csvcolmns(){
         $csvlist = array(
             'inouthyouzi' => '入出庫',
             'date' => '入出庫日付',
@@ -380,49 +414,82 @@ class StocksController extends Controller
         return $csvlist;
     }
     
+    //入出庫履歴をPDFで出力する。
     public function historiesPDF(Request $request,$id){
-                //$histories = \Faker\Factory::create('ja_JP');
-            $warehouse=\App\Warehouse::find($id);
-            $histories=\DB::table('histories')
-                ->join('stocks','histories.stocks_id','=','stocks.id')
-                ->join('items', 'items.id', '=', 'stocks.item_id')
-                ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
-                ->where('warehouse_id', $warehouse->id)
-                ->orderBy('histories.date','ASC')
-                ->get();
-            $data=[
-                'id'=>$id,
-                'histories'=>$histories];
-                Log::debug('入出庫履歴照会PDF出力');
+        Log::debug('入出庫履歴照会PDF出力');
+            //$histories = \Faker\Factory::create('ja_JP');
+        $warehouse=\App\Warehouse::find($id);
+        $histories=\DB::table('histories')
+            ->join('stocks','histories.stocks_id','=','stocks.id')
+            ->join('items', 'items.id', '=', 'stocks.item_id')
+            ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
+            ->where('warehouse_id', $warehouse->id)
+            ->orderBy('histories.date','ASC')
+            ->get();
+        $data=['id'=>$id,
+            'histories'=>$histories];
         return \PDF::loadView('histories.list_for_pdf',$data)->setOption('encoding', 'utf-8')->inline();
     }
+    
+    //item_codeを取得する。
     public function create(){
+        Log::debug('item_codeの取得');
         $items=\App\Item::orderBy('item_code','asc')->plunk('','item_code');
     }
+    
+    //入出庫の取り消し
     public function delete($id){
+        Log::debug('入出庫取消');
+        //該当の商品の在庫数を調べる。
         $history=\App\Historie::find($id);
+        $inoutSums = \DB::table('histories')
+            ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
+            ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
+            ->join('items', 'items.id', '=', 'stocks.item_id')
+            ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
+            ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
+            ->where('stocks_id', $history->stocks_id)
+            ->get();
+            
+        $sum=0;
+        foreach($inoutSums as $inoutSum) {
+                $sum = $sum + $this->inoutVal($inoutSum->inout,$inoutSum->sum);}
+        //取り消し対象が入庫か、出庫かを調査する。
         $userid=\DB::table('histories')
             ->join('stocks','histories.stocks_id','=','stocks.id')
             ->join('items', 'items.id', '=', 'stocks.item_id')
             ->select('items.user_id','histories.inout')
             ->where('histories.id', $history->id)
             ->first();
-        if(\Auth::id()==$userid->user_id && $history->change_status=='可'){
-            $history->delete();
-            return back();
+        
+        //入庫処理かつ、取り消し後にその商品の在庫がマイナスになる→OUT、そうでなければ→safeとする。
+        $judge='';
+        if($history->inout==1 && $sum - $history->quantity < 0){
+            $judge='out';
+            
+        }else{
+            $judge='safe';
         }
-        return back()->with('flash_message','取り消しできません。');
+
+        //残高を調べ、その入庫を消しても問題ないか   状況次第でコメントを表示
+        if($judge=='out'){
+            return back()->with('flash_message','在庫数が不足するため取り消しできません。');
+        }elseif(\Auth::id()==$userid->user_id && $history->change_status=='可' ){
+            $history->delete();
+            return back()->with('flash_message','取り消し完了しました。');
+        }else{
+            return back()->with('flash_message','取り消しできません。');
+        }
     }
-    //protected $head;
-    //protected $csvfilePath;
-    //protected $csvimport=null;
-    //public function __construct(CSVimport $csvimport){
-        //$this->csvimport=$csvimport;
-    //}
+
+    //一括入出庫用CSVファイルの取り込み画面を表示
     public function inoutfile(){
         return view('processing.import');
     }
+    
+    //一括入出庫用CSVファイルの取り込み
     public function import(Request $request){
+        Log::debug('一括入出庫');
         //***** suda add start 2010.10.12 *****
         if(!$request->hasFile('csv_file') ) {
             return back()->with('flash_message','CSVファイルを選択して下さい。');
@@ -430,22 +497,18 @@ class StocksController extends Controller
         elseif(!$request->file('csv_file')->isValid()) {
             return back()->with('flash_message','CSVファイルをが正しくありません。');
         }    
-        //elseif($request->hasFile('csv_file') && $request->file('csv_file')->isValid()) {
         else {
             $request->file('csv_file')->move(public_path()."/storage/csv/",$_FILES['csv_file']['name']);
             $file_path = public_path()."/storage/csv/".$_FILES['csv_file']['name'];
-            //dd($file_path);
-         }
+        }
         //***** suda add end 2010.10.12 ******
  
         setlocale(LC_ALL,'ja_JP.UTF-8');
         //$uploaded_file=$request->file('csv_file');        
         //$file_path=$request->file('csv_file')->path($uploaded_file);
-
         $file=new SplFileObject($file_path);
         $file->setFlags(SplFileObject::READ_CSV);
         $row_count=1;
-        
         //postで受け取ったcsvファイルデータ
 
         //Goodby CSVのconfig設定
@@ -460,9 +523,7 @@ class StocksController extends Controller
             $rows[] = $row;
         });
         // CSVデータをパース
-        //$lexer->parse($file, $interpreter);
         $lexer->parse($file_path, $interpreter);
-        
         $data = array();
         // CSVのデータを配列化
         foreach ($rows as  $value) {
@@ -470,65 +531,69 @@ class StocksController extends Controller
             foreach ($value as $k => $v) {
                 Log::debug("*** " . $v);
                 if($v=='倉庫名称'){
-                    continue;}
-                if($v=='入出庫種別'){
-                    continue;}
-                if($v=='日付'){
-                    continue;}
-                if($v=='得意先名称'){
-                    continue;}
-                if($v=='品目名称'){
-                    continue;}
-                if($v=='数量'){
-                    continue;}
-                    
+                    continue;
+                }if($v=='入出庫種別'){
+                    continue;
+                }if($v=='日付'){
+                    continue;
+                }if($v=='得意先名称'){
+                    continue;
+                }if($v=='品目名称'){
+                    continue;
+                }if($v=='数量'){
+                    continue;
+                }
                 $csv_key[]=$k;
                 $csv_value[]=$v;
                 $column_name=[];
-                
                 if($k==0){
-                    $arr += [$k =>$v];}
-                if($k==1){
-                    $arr += [$k =>$v];}
+                    $arr += [$k =>$v];
+                }if($k==1){
+                    $arr += [$k =>$v];
                     //$arr = array_merge($arr,array($k =>$v));
                     //array_push($column_name,'入出庫種別');
-                    //array_push($csv_value,$v);
-                if($k==2){
-                    $arr += [$k =>$v];}
-                if($k==3){
-                    $arr += [$k =>$v];}
-                if($k==4){
-                    $arr += [$k =>$v];}
-                if($k==5){
-                    $arr += [$k =>$v];}
+                    //array_push($csv_value,$v);                   
+                }if($k==2){
+                    $arr += [$k =>$v];
+                }if($k==3){
+                    $arr += [$k =>$v];
+                }if($k==4){
+                    $arr += [$k =>$v];
+                }if($k==5){
+                    $arr += [$k =>$v];
+                }
+                $value_count++;
+                dd($value_count);
             }
         }
-            //　バリデーション処理
-            $validator = Validator::make($arr,[
-                0 => 'required|exists:warehouses,warehouse_name',
-                1=> 'required|in:入庫,出庫',
-                2=>'required|date|after:Carbon::now()->startOfMonth();',
-                3=>'required|exists:customers,customer_name',
-                4=>'required|exists:items,item_name',
-                5=>'required|numeric|between:1,2147483647'
-            ]);
-
-            if ($validator->fails()) {
-                $validator->errors()->add('line', $v);
-                //return view('processing.import')->withErrors($validator)->withInput();
-                return view('processing.import')->withErrors($validator);}
         
- //$fileでOK？→OKそう。
+        //　バリデーション処理
+        $validator = Validator::make($arr,[
+            0 => 'required|exists:warehouses,warehouse_name',
+            1 => 'required|in:入庫,出庫',
+            2 => 'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
+            3 => 'required|exists:customers,customer_name',
+            4 => 'required|exists:items,item_name',
+            5 => 'required|numeric|between:1,2147483647'
+        ]);
+        //バリデーションでエラーが発生下場合は、エラーメッセージとともに取り込みが面へ
+        if ($validator->fails()) {
+            $validator->errors()->add('line', $v);
+            return view('processing.import')->withErrors($validator);
+        }
+
+        //historiesテーブルに値を格納
         foreach($file as $row){
             if($row===[null])continue;
-            if($row_count>1)
-            {
+            if($row_count>1){
                 $warehouse_name=$row[0];
                 $warehouse=\App\Warehouse::where('warehouse_name',$row[0])->first();
-                if($row[1]='入庫')
-                $inout='1';
-                elseif($row[2]='出庫')
-                $inout='2';
+                
+                if($row[1] == '入庫'){
+                    $inout='1';
+                }elseif($row[1] == '出庫'){
+                    $inout='2';
+                }
                 $date=$row[2];
                 $customer_name=$row[3];
                 $customer=\App\Customer::where('customer_name',$customer_name)->first();
@@ -536,9 +601,11 @@ class StocksController extends Controller
                 $item=\App\Item::where('item_name',$item_name)->first();
                 $quantity=$row[5];
                 $stock ='';
+                
                 if ($warehouse->matched($item->id)) {
-                } else {
-                    $stock = $warehouse->having()->attach($item->id);}
+                }else {
+                    $stock = $warehouse->having()->attach($item->id);
+                }
                 $stock = $warehouse->matchedStock($item->id)->first()->pivot;
                 $stock_id=$stock->id;
                 $history = new \App\Historie();
@@ -553,7 +620,6 @@ class StocksController extends Controller
             }
             $row_count++;
         }
-        Log::debug('一括入出庫');
-        return view('processing.import');
+        return view('processing.import')->with('flash_message','一括処理完了しました。');
     }
 }

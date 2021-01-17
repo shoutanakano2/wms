@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.pdf')
 @section('content')
     <h1 class="my-4">入出庫履歴照会</h1>
         <table class="table table-striped" border="1" >

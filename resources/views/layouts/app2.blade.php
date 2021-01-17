@@ -6,9 +6,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="/css/wms.css">
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="{{ asset('/js/javascript.js') }}"></script>
     </head>
 
     <body class='container-fluid p-0 mh-100'>
+    
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark col-xl-12">
             <a class='navbar-brand' href='#'>倉庫管理システム</a>
             <button class="navbar-togger" type="button" data-togger="collapse" data-target="navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,15 +93,24 @@
                     </div>
                 </div>
                 <div class="col-xl-10 p-0 bg-info">
+                    @if (session('flash_message'))
+                        <div class='flash_message alert alert-danger m-2' role='alert'>
+                            {{ session('flash_message') }}
+                        </div>
+                    @endif
+                    @if (Session::has('message'))
+                        <p>{{ session('message') }}</p>
+                    @endif
                     @include('commons.error_messages')
                     @yield('content')
                 </div>
             </div>
         </div>
-        
-        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
         <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"></script>
     </body>
 </html>
+
+     

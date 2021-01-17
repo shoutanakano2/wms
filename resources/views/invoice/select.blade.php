@@ -15,7 +15,7 @@
                <tbody class="text-center">
                     <tr>
                         <td>
-                            {!! Form::open(['route'=>['customers.show','id'=>$customer->id],'method' =>'get']) !!}
+                            {!! Form::open(['route'=>['customers.month_select','id'=>$customer->id],'method' =>'get']) !!}
                                 {!! Form::hidden('customer_code', $customer->customer_code) !!}
                                 {!! Form::submit($customer->customer_code,['class'=>'btn btn-outline-dark btn-sm']) !!}
                             {!! Form::close() !!}

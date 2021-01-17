@@ -27,4 +27,5 @@
         {!! Form::submit('入庫',['class'=>'btn btn-primary']) !!}
         {!! Form::close() !!}
     </div>
+    
 @endsection

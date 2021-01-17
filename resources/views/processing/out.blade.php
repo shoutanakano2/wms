@@ -3,11 +3,7 @@
     <div class='text-center my-4'>
         <h1>出庫処理</h1>
     </div>
-    @if(session('flash_message'))
-        <div class='flash_message alert alert-danger m-2' role='alert'>
-            {{ session('flash_message') }}
-        </div>
-    @endif
+
     <p>倉庫名称:{!! $warehouse->warehouse_code !!}</p>
      {!! Form::open(['route'=>['stocks.out',$warehouse->id]]) !!}
     <table class='table table-striped' border='1'>

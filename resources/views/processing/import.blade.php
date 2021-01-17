@@ -15,13 +15,15 @@
                     2. ファイルを選択し読み込んでください。
                 </div>
             </div>
-            <form role='form' method='post' action='import' enctype='multipart/form-data'>
+            {{Form::open(['url' => route('stocks.import'), 'method' => 'post','enctype' => 'multipart/form-data'])}}
+            <!-- <form role='form' method='post' action='import' enctype='multipart/form-data'> -->
                 {{ csrf_field() }}
                 <input type='file' name='csv_file' id='csv_file'>
                 <div class='form-group'>
                     <button type='submit' class='btn btn-default btn-success'>保存</button>
                 </div>
-            </form>
+            <!-- </form> -->
+            {{Form::close()}}
         </div>
     </div>
 @endsection

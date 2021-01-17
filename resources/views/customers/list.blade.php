@@ -2,11 +2,7 @@
 
 @section('content')
     <h1 class="my-4">得意先マスタ一覧</h1>
-        @if(session('flash_message'))
-            <div class='flash_message alert alert-danger m-2' role='alert'>
-                {{ session('flash_message') }}
-            </div>
-        @endif
+
         <table border="1" class="table table-striped">
             <thead>
                 <tr>

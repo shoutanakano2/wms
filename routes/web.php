@@ -17,7 +17,6 @@ Route::get('/', function () {
 
 Route::get('signup','Auth\RegisterController@showRegistrationForm')->name('signup.get');
 Route::post('signup','Auth\RegisterController@register')->name('signup.post');
-
 Route::get('login','Auth\LoginController@showLoginForm')->name('login');
 Route::post('login','Auth\LoginController@login')->name('login.post');
 Route::get('logout','Auth\LoginController@logout')->name('logout.get');
@@ -47,8 +46,11 @@ Route::group(['middleware'=>'auth'],function(){
    Route::get('histories/{id}/list','StocksController@history')->name('histories.list');
    Route::get('histories/{id}/pdf','StocksController@historiesPDF')->name('histories.PDF');
    Route::get('histories/{id}/csv','StocksController@historiesCSV')->name('histories.CSV'); 
+   Route::get('customer/{id}','CustomersController@month_choose')->name('customers.month_select');
+   Route::get('customer/{id}/pdf','CustomersController@invoicePDF')->name('customer.PDF');
    Route::get('customerslist','CustomersController@list')->name('customers.list');
    Route::get('inout', 'StocksController@inoutfile')->name('stocks.inoutfile');
    Route::post('/import','StocksController@import')->name('stocks.import');
 });
 //php artisan serve --host=$IP --port=$PORT 
+//php -S $IP:$PORT -c php.ini

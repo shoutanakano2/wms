@@ -1,4 +1,4 @@
-@extends('layouts.app2')
+@extends('layouts.pdf')
 @section('content')
 
 <!--table
@@ -519,15 +519,5 @@ rt
 <!--Excel �� Web �y�[�W�Ƃ��Ĕ��s �E�B�U�[�h�̃A�E�g�v�b�g�̏I���-->
 <!----------------------------->
 </body>
-        <div class='d-flex flex-row'>
-            <div class='p-2'>
-                {!! Form::open(['route'=>['customer.PDF', 'id' => $id,],'method' =>'get' ]) !!}
-                {!! Form::hidden('year',$year) !!}
-                {!! Form::hidden('month',$month) !!}
-                {!! Form::submit('PDF出力',['class'=>'btn btn-info btn-sm']) !!}
-                {!! Form::close() !!}
-            </div>
-        </div>
-
 
 @endsection

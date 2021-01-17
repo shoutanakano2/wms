@@ -16,11 +16,11 @@
                 </div>
                 <div class='form-group'>
                     {!! Form::label('sell_price','売値') !!}
-                    {!! Form::text('sell_price',old('sell_price'),['class'=>'form-control']) !!}
+                    {!! Form::text('sell_price',old('sell_price',$item->sell_price),['class'=>'form-control']) !!}
                 </div>
                 <div class='form-group'>
                     {!! Form::label('purchase_price','仕入値') !!}
-                    {!! Form::text('purchase_price',old('purchase_price'),['class'=>'form-control']) !!}
+                    {!! Form::text('purchase_price',old('purchase_price',$item->purchase_price),['class'=>'form-control']) !!}
                 </div>
                 {!! Form::submit('変更',['class'=>'btn btn-primary btn-block']) !!}
             {!! Form::close() !!}

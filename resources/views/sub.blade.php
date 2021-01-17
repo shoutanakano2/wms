@@ -238,3 +238,9 @@ xmlns="http://www.w3.org/TR/REC-html40">
   border-right:none;border-bottom:.5pt solid #229FC4;border-left:none'></td>
   <td class=xl6553518044 width=26 style='width:20pt'></td>
  </tr>
+ 
+         @if(session('flash_message'))
+            <div class='flash_message alert alert-danger m-2' role='alert'>
+                {{ session('flash_message') }}
+            </div>
+        @endif
