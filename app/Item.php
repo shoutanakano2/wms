@@ -7,7 +7,7 @@ use Log;
 class Item extends Model
 {
     use SoftDeletes;
-    protected $fillable=['user_id','item_code','item_name','sell_price','purchase_price','deleted_at'];
+    protected $fillable=['id','user_id','item_code','item_name','sell_price','purchase_price','deleted_at'];
     //itemの作成ユーザーの取得
     public function user(){
         Log::debug('itemの作成ユーザーの取得');

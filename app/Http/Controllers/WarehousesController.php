@@ -106,14 +106,21 @@ class WarehousesController extends Controller
                 ->where('user_id',$user->id)
                 ->OrderBy('item_code')
                 ->pluck('item_code', 'item_name');
-        $customers=\App\Customer::select('customer_code','customer_name')
-                ->where('user_id',$user->id)
-                ->OrderBy('customer_code')
-                ->pluck('customer_code','customer_name');
-        $data=[
+        $data = [];
+        $data += $this->selectlist($data,$user);
+        
+        //$customers=\App\Customer::select('customer_code','customer_name')
+                //->where('user_id',$user->id)
+                //->OrderBy('customer_code')
+                //->pluck('customer_code','customer_name');
+        //$customers =[];
+        //$customers += $this->customerslist($customers,$user);
+
+        $data += [
             'warehouse'=>$warehouse,
             'items'=>$items,
-            'customers'=>$customers];
+            //'customers'=>$customers
+            ];
         return view('processing.in',$data);
     }
     

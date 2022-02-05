@@ -18,12 +18,13 @@ class StocksController extends Controller
     //入庫処理
     public function store(Request $request,$id){
         Log::debug('入庫');
+        /*
         //バリデーション
         $this->validate($request,[
-            'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
+            //'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
             'customer_code'=>'required',
             'item_code'=>'required',
-            'quantity'=>'required|numeric|between:1,2147483647']);
+            //'quantity'=>'required|numeric|between:1,2147483647']);
         // 通常のバリデーション
         //$validator = Validator::make($request->all(), [
 	        //現在のばーりでーしょんのまま
@@ -38,27 +39,116 @@ class StocksController extends Controller
             //return back()->withInput()->withErrors($validator);
         //}
         //投入された値から、DBに保存する値を求る。
+       
+        $validator =$request->validate([
+            //'quantity.*' => 'required_with:item_code.*|numeric|between:0,2147483647',
+             'quantity.*' => 'required|Integer',
+             'customer_code.*'=>'required',
+            'item_code.*'=>'required',
+        ]);
+    */
+        $validator = Validator::make($request->all(),[]);
+        $validator->validate();
         $warehouse=\App\Warehouse::find($id);
-        $itemid = BaseClass::itemId($request,$id);
-        $customerid = BaseClass::customerId($request,$id);
-        //$stocks=\App\Stock::where('item_id',$itemid)->where('warehouse_id',$id)->first();
-        //倉庫と品目の組み合わせがなければ、作成し、その変数を取得する。
-        $stock ='';
-        if ($warehouse->matched($itemid)) {
-        } else {
-            $stock = $warehouse->having()->attach($itemid);
-        }
-        $stock_id = BaseClass::stockId($warehouse,$itemid);
         
-        //DBに値を保存する。
-        $history = new \App\Historie();
-        $history->stocks_id=$stock_id;
-        $history->inout=1;
-        $history->date=$request->date;
-        $history->quantity=$request->quantity;
-        $history->customer_id=$customerid;
-        $history->change_status='可';
-        $history->save();
+        $j = 0;
+        foreach((array)$request->quantity as $value){
+            if ( $request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] != 0) {
+                $validator->errors()->add('', ($j+1) .'行目の入荷日が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+                //exit(($j+1) .'行目の入荷日が入力されていません。');
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の仕入先が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の品目コードが入力されていま。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と仕入先コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の仕入先コードと品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の仕入先コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と仕入先コードと品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と仕入先コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の入荷日と品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の仕入先コードと品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }
+            else{
+                $j++;
+            }
+        }
+        
+        $i = 0;
+        foreach((array)$request->quantity as $val){
+           //バリデーション
+           /*
+            $this->validate($request,[
+                'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
+                'customer_code'=>'required',
+                'item_code'=>'required',
+                'quantity'=>'required|numeric|between:1,2147483647']);
+        
+            */
+            
+            if($val=="0"){
+                return back()->with('flash_message','入庫完了しました。');
+            }else{
+            //$itemid = BaseClass::itemId($request,$i);
+            $item=\App\Item::where('item_name',$request->item_code[$i])->first();
+            
+            //dd($item->id);
+            
+            $itemid = $item['id']; 
+            //$itemid=optional($item)->id; 
+
+            $customerid = BaseClass::customerId($request,$id,$i);
+      
+            //倉庫と品目の組み合わせがなければ、作成し、その変数を取得する。
+            $stock ='';
+            if ($warehouse->matched($itemid)) {
+            } else {
+                $stock = $warehouse->having()->attach($itemid);
+            }
+            $stock_id = BaseClass::stockId($warehouse,$itemid);
+            
+            //DBに値を保存する。
+            $history = new \App\Historie();
+            $history->stocks_id = $stock_id;
+            $history->inout=1;
+            $history->date=$request->date[$i];
+            $history->quantity=$request->quantity[$i];
+            $history->customer_id=$customerid;
+            $history->change_status='可';
+            $history->save();
+            $i++;
+            }
+        }
+        
+        //====================================================
         return back()->with('flash_message','入庫完了しました。');
     }
     
@@ -229,12 +319,8 @@ class StocksController extends Controller
         }
         array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
         
-        //echo gettype($inoutDatas) . "\n";
-        //var_dump( is_array($inoutDatas) );
         $head=['倉庫名称','品目名称','数量'];
         $csvlist = $this->stocksCsvColmns(); 
-    
-        //$f=fopen('test1.csv','w');
         $fp = fopen('test1.csv', 'w');
         if($fp){
             mb_convert_variables('SJIS', 'UTF-8', $head);
@@ -242,27 +328,15 @@ class StocksController extends Controller
             $inoutDatacsvs=[];
             
             foreach($inoutDatas as $inoutData){
-            
                 $data=[];
                 foreach($inoutData as $key => $value){
-                    
-                    //dd($csvlist,$key,$value,$inoutData,$data);
                     $data[] = str_replace(array("\r\n", "\r", "\n"), '', $value);
-                    //$data[] = $value;
                 }
                 $inoutDatacsvs[] = $data;
                 mb_convert_variables('SJIS', 'UTF-8', $data);
                 fputcsv($fp, $data);
             }
-       
-            //foreach ($inoutDatacsvs as $fields) {
-            //    mb_convert_variables('SJIS', 'UTF-8', $fields);
-            //    mb_convert_variables('SJIS-win', 'UTF-8', $fields);
-            //    fputcsv($fp, $fields);
-            //}
             fclose($fp);
-        
-            //fclose($f);
         }
         header("Content-Type: application/octet-stream");
         header('Content-Length: '.filesize('test1.csv'));
@@ -562,11 +636,11 @@ class StocksController extends Controller
                 }if($k==5){
                     $arr += [$k =>$v];
                 }
-                $value_count++;
-                dd($value_count);
+                //$value_count++;
+                $value++;
             }
         }
-        
+        dd($arr);
         //　バリデーション処理
         $validator = Validator::make($arr,[
             0 => 'required|exists:warehouses,warehouse_name',

@@ -38,29 +38,39 @@ class BaseClass
     }
     
     //StocksController@store,out
-    public static function itemId($request,$id){
-        $item=\App\Item::where('item_name',$request->item_code)->first();
+    public static function itemId($request,$i){
+     
+        $item=\App\Item::where('item_name',$request->item_code[$i])->first();
         $itemid=$item->id;
+        dd($item);
         return $itemid;
     }
     
     //StocksController@store,out
-    public static function customerId($request,$id){
-        $customer=\App\Customer::where('customer_name',$request->customer_code)->first();
-        $customerid=$customer->id;
+    public static function customerId($request,$id,$i){
+        $customer=\App\Customer::where('customer_name',$request->customer_code[$i])->first();
+        $customerid=optional($customer)->id;
         return $customerid;
     }
     
     //StocksController@store,out
     public static function stockId($warehouse,$itemid){
-        $stock = $warehouse->matchedStock($itemid)->first()->pivot;
-        $stock_id=$stock->id;
+        //dd($warehouse->matchedStock($itemid)->first()->pivot);
+        //$stock = $warehouse->matchedStock($itemid)->first()->pivot;
+        //$stock_id=$stock->id;
+        //$stock = $warehouse->matchedStock($itemid)->first()->pivot;
+        $item = $warehouse->matchedStock($itemid)->first();
+ //dd($stock);       
+        //dd($stock);
+        //$stock_id=$stock->id;
+        $stock_id=$item['stock_id'];
+        
         return $stock_id;    
         //$warehouse->matching($itemid,$stock->id,$request->date,$request->quantity);
         //$stocks = $warehouse->matchedStock($item->id);
     }
     
-    //CustomersController@129,173
+    //CustomersController@show,invoicePDF
     public static function data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month){
         $data=[
             'id'=>$id,

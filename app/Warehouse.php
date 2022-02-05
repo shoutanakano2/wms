@@ -17,7 +17,11 @@ class Warehouse extends Model
     //当倉庫で入庫処理したことのある品目の一覧
     public function having(){
         Log::debug('当倉庫で入庫処理したことのある品目の一覧');
-        return $this->belongsToMany(Item::class,'stocks','warehouse_id','item_id')->using(Stock::class)->withTimestamps()->withPivot("id");;
+        return $this->belongsToMany(Item::class,'stocks','warehouse_id','item_id')
+                                        ->using(Stock::class)
+                                        ->withTimestamps()
+                                        ->withPivot(["id as stock_id"]);
+        //->using('App\Stock');
     }
     
     //倉庫と品目の組み合わせ作成し、入庫処理
