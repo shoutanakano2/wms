@@ -52,5 +52,5 @@ Route::group(['middleware'=>'auth'],function(){
    Route::get('inout', 'StocksController@inoutfile')->name('stocks.inoutfile');
    Route::post('/import','StocksController@import')->name('stocks.import');
 });
-//php artisan serve --host=$IP --port=$PORT 
+// php artisan serve --host=$IP --port=$PORT
 //php -S $IP:$PORT -c php.ini
