@@ -1,6 +1,22 @@
 @extends('layouts.app2')
 @section('content')
-    <div class='text-center my-4'>
+    <div class='form-wrapper'>
+        <h1>倉庫マスタ登録</h1>
+        <div class='form'>
+            {!! Form::open(['route'=>'warehouses.store']) !!}
+                <div class='form-group'>
+                    {!! Form::text('warehouse_code',old('warehouse_code'),['class'=>'form-control','placeholder'=>'倉庫コード']) !!}
+                </div>
+                <div class='form-group'>
+                    {!! Form::text('warehouse_name',old('warehouse_name'),['class'=>'form-control','placeholder'=>'倉庫名称']) !!}
+                </div>
+                <div class = "button-panel">
+                    {!! Form::submit('登録',['class'=>'btn']) !!}
+                </div>
+            {!! Form::close() !!}
+        </div>
+    </div>
+    {{--<div class='text-center my-4'>
         <h1>倉庫マスタ登録</h1>
     </div>
     <div class='row mt-4'>
@@ -17,9 +33,11 @@
                 {!! Form::submit('登録',['class'=>'btn btn-primary btn-block']) !!}
             {!! Form::close() !!}
         </div>
-    </div>
+    </div> --}}
 @endsection
-
+@push('css')
+    <link href="{{ asset('css/register.css') }}" rel="stylesheet">
+@endpush
 @section('content2')
     <div class='text-center m-4'>
         @if(Auth::check())

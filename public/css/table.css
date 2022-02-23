@@ -1,0 +1,112 @@
+@charset "UTF-8";
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+
+h1{
+    text-align:center;
+    padding:1em 0;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  line-height: 1.25;    /*テキストの行間*/
+}
+
+table{
+    border-collapse:collapse; /*セルが境界を共有するか分離するか*/
+    margin: 0 auto;
+    padding: 0; /*コンテンツと境界との間の領域*/
+    width: 650px;
+    table-layout: fixed; /*表と列の幅は table 要素と col 要素の幅によって、または最初の行のセルの幅によって設定されます。*/
+}
+table tr{
+    background-color: #fff;
+    border:1px solid #bbb;    /*solid=実戦*/
+    padding:.35em;            /*%と同じ*/
+}
+table th,
+table td{
+    padding: 1em 10px 1em 1em;
+    border-right: 1px solid #bbb;
+}
+table th{
+    font-size: .85em;
+}
+table thead tr{
+    background-color: #eee;
+}
+.button-panel{
+    margin:2em 0 0;
+    width:25%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto
+    
+}
+.button-panel .btn{
+    background: #f16272;
+    border:none;
+    color: #fff;
+    cursor:pointer;
+    height: 50px;
+    font-family: 'Open Sans',sans-serif;
+    font-size: 1.2em;
+    letter-spacing: 0.05em;
+    text-align: center;
+    text-transform: uppercase;
+    transition:background 0.3s ease-in-out;
+    width: 100%;
+    float: center;
+}
+@media screen and (max-width:600px){
+    table{
+        border:0;
+        width: 100%;
+    }
+    table th{
+        background-color: #eee;
+        display: block;    /*https://saruwakakun.com/html-css/basic/display*/
+        border-right:none;
+    }
+    /*clipを利用したテキストの非表示方法*/
+    table thead{
+        border:none;
+        clip:rect(0 0 0 0); /*https://www.tagindex.com/stylesheet/img/clip.html*/
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding:0;
+        position: absolute;    /*「要素を配置する基準」を指定するためのプロパティ基準はウィンドウ、または親要素*/
+        width: 1px;
+    }
+    table tr{
+        display: block;
+        margin-bottom: .625em;
+    }
+    table td{
+        border-bottom:1px solid #bbb;
+        display: block;
+        font-size: .8em;
+        text-align: right;
+        position: relative;    /*「要素を配置する基準」を指定するためのプロパティ 基準は元いた位置*/
+        padding:.625em .625em .625em .4em;
+        border-right:none;
+    }
+    table td::before{
+        content: attr(data-label);/*attr()は、選択された要素の属性の値を受け取り、スタイルシートの中で使うために使用されます。*/
+        font-weight: bold;
+        position: absolute;
+        left: 10px;
+    }
+    
+    table td:last-child{
+        border-bottom:0;
+    }
+}

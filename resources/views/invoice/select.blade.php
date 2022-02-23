@@ -1,10 +1,7 @@
 @extends('layouts.app2')
 @section('content')
-    <div class='text-center my-4'>
-        <h1>請求書発行</h1>
-    </div>
-    <h2 class='my-4'>顧客選択</h2>
-        <table border="1" class="table table-striped">
+    <h1>顧客選択(請求書発行)</h1>
+        <table border="1">
             <thead>
                 <tr>
                     <th scope="col" class="text-center">顧客コード</th>
@@ -14,13 +11,13 @@
            @foreach($customers as $customer)
                <tbody class="text-center">
                     <tr>
-                        <td>
+                        <td data-label="顧客コード">
                             {!! Form::open(['route'=>['customers.month_select','id'=>$customer->id],'method' =>'get']) !!}
                                 {!! Form::hidden('customer_code', $customer->customer_code) !!}
                                 {!! Form::submit($customer->customer_code,['class'=>'btn btn-outline-dark btn-sm']) !!}
                             {!! Form::close() !!}
                         </td>
-                        <td>
+                        <td data-label="顧客名称">
                             {!! $customer->customer_name !!}
                         </td>
                     </tr>
@@ -28,3 +25,6 @@
             @endforeach
     {{ $customers->links('pagination::bootstrap-4') }}
 @endsection
+@push('css')
+    <link href="{{ asset('css/table.css') }}" rel="stylesheet">
+@endpush

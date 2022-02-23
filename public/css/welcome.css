@@ -1,0 +1,57 @@
+@charset "UTF-8";
+
+/*https://saruwakakun.com/html-css/reference/image-text*/
+
+.carousel slide{
+    position: relative;
+}
+
+.carousel .carousel-inner button .signup {
+    position: absolute;
+    color: white;
+    display: block;
+    font-weight: bold;
+    font-size: 2em;
+    font-family: 'Open Sans',sans-serif;
+    left: 50%;
+    top: 45%;
+    /*-ms-transform:translate(-50%,-50%);
+    -webkit-transform: translate(-50%,-50%);
+    transform:translate(-50%,-50%);
+    
+    
+    margin: 0;
+    padding:0;
+    
+    margin-left: auto;
+    margin-right: auto;*/
+}
+
+.carousel .carousel-inner button .login {
+    position: absolute;
+    color: white;
+    display: block;
+    font-weight: bold;
+    font-size: 2em;
+    font-family: 'Open Sans',sans-serif;
+    left: 50%;
+    top: 55%;
+}
+
+.carousel div{
+    width: 100%
+}
+
+.top{
+    position: relative;
+}
+.top img{
+    width: 100%;
+}
+.top button{
+    position: absolute;
+    top:50%;
+    left: 50%;
+    margin:0;
+    padding:0;
+}

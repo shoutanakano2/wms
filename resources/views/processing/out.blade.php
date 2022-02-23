@@ -1,31 +1,43 @@
 @extends('layouts.app2')
 @section('content')
-    <div class='text-center my-4'>
-        <h1>出庫処理</h1>
-    </div>
-
-    <p>倉庫名称:{!! $warehouse->warehouse_code !!}</p>
+    <h1>出庫処理<p>(倉庫名称:{!! $warehouse->warehouse_code !!})</p></h1>
      {!! Form::open(['route'=>['stocks.out',$warehouse->id]]) !!}
-    <table class='table table-striped' border='1'>
+    <table border='1'>
         <thead>
             <tr>
-                <th>出庫日付</th>
-                <th>得意先コード</th>
-                <th>品目コード</th>
-                <th>数量</th>
+                <th scope='col' class="text-center">出庫日付</th>
+                <th scope='col' class="text-center">得意先コード</th>
+                <th scope='col' class="text-center">品目コード</th>
+                <th scope='col' class="text-center">数量</th>
             </tr>
         </thead>
         <tbody class='form-group'>
-            <tr>
-                <td>{!! Form::date('date',null,['class'=>'form-control']) !!}</td>
-                <td>{!! Form::select('customer_code',$customers,null,['class'=>'form-control']) !!}</td>
-                <td>{!! Form::select('item_code',$items,null,['class'=>'form-control']) !!}</td>
-                <td>{!! Form::number('quantity',null,['class'=>'form-control']) !!}</td>
-            </tr>
+            @for($i = 0 ; $i < 3; $i ++)
+                <tr>
+                    <td data-label="出庫日付">{!! Form::date('date[]',null,['class'=>'form-control text-center']) !!}</td>
+                    <td data-label="得意先コード">{!! Form::select('customer_code['.$i.']',$customersArray,old('customer_code['.$i.']'),['class' => 'my_class','id' => 'responsible_cd']) !!}</td>
+                    <td data-label="品目コード">{!! Form::select('item_code[]',$itemsArray,null,['class'=>'my_class','id'=>'responsible_cd']) !!}</td>
+                    <td data-label="数量">{!! Form::number('quantity[]',null,['class'=>'form-control text-center']) !!}</td>
+                </tr>
+            @endfor
         </tbody>
     </table>
-    <div class="float-right">
-        {!! Form::submit('出庫',['class'=>'btn btn-primary']) !!}
+    <div class="button-panel">
+        {!! Form::submit('出庫',['class'=>'btn']) !!}
         {!! Form::close() !!}
     </div>
 @endsection
+@push('css')
+    <link href="{{ asset('css/middle-table.css') }}" rel="stylesheet">
+@endpush
+
+{{--
+        <tbody class='form-group'>
+            <tr>
+                <td data-label="出庫日付">{!! Form::date('date',null,['class'=>'form-control text-center']) !!}</td>
+                <td data-label="得意先コード">{!! Form::select('customer_code',$customers,null,['class'=>'form-control text-center']) !!}</td>
+                <td data-label="品目コード">{!! Form::select('item_code',$items,null,['class'=>'form-control text-center']) !!}</td>
+                <td data-label="数量">{!! Form::number('quantity',null,['class'=>'form-control text-center']) !!}</td>
+            </tr>
+        </tbody>
+--}}

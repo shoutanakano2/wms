@@ -71,7 +71,7 @@ class BaseClass
     }
     
     //CustomersController@show,invoicePDF
-    public static function data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month){
+    public static function data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month,$subtotal){
         $data=[
             'id'=>$id,
             'details'=>$details,
@@ -82,7 +82,8 @@ class BaseClass
             'tax'=>$tax,
             'total_price'=>$total_price,
             'year'=>$year,
-            'month'=>$month,];
+            'month'=>$month,
+            'subtotal'=>$subtotal];
         return $data;
     }
     

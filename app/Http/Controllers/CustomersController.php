@@ -129,6 +129,7 @@ class CustomersController extends Controller
     public function show(Request $request,$id){
         Log::debug('請求書表示');
         //該当年月の取引があったかを確認
+        
         $year=$request->year;
         $month=$request->month;
         $customer=\App\Customer::find($id);
@@ -164,7 +165,7 @@ class CustomersController extends Controller
             }
             $total_price=$subtotal*1.1;
             $tax=$subtotal*0.1;
-            $data = BaseClass::data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month);
+            $data = BaseClass::data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month,$subtotal);
             return view('invoice.list',$data);
         }
     }
@@ -187,7 +188,7 @@ class CustomersController extends Controller
         }
         $total_price=$subtotal*1.1;
         $tax=$subtotal*0.1;
-        $data = BaseClass::data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month);
+        $data = BaseClass::data($id,$details,$customer,$paynumber,$date,$paydate,$tax,$total_price,$year,$month,$subtotal);
         return \PDF::loadView('invoice.pdf',$data)->setOption('encoding', 'utf-8')->inline();
     }
 }

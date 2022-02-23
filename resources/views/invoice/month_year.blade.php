@@ -1,17 +1,24 @@
 @extends('layouts.app2')
 @section('content')
-    <div class='text-center my-4'>
-        <h1>請求書発行</h1>
-    </div>
-    <h2 class='my-4'>請求年月選択</h2>
-        <div class='col-sm-6 offset-sm-3'>
+    <div class="form-wrapper">
+        <h1>請求年月選択<br>(請求書発行)</h1>
+        
+        <div class='form'>
             {!! Form::open(['route'=>['customers.show',$customer->id],'method' =>'get']) !!}
-                <h6>作成したい請求書の年月を選択して下さい。</h6>
-                {{Form::selectRange('year', 2020, 2021, old('year'), ['class' => 'form-control', 'placeholder'=>'年'])}}
-                {{Form::selectRange('month', 1, 12, old('month'),['class' => 'form-control', 'placeholder'=>'月'])}}
-                {!! Form::submit('表示',['class'=>'btn btn-primary btn-block']) !!}
+                <h6 class='text-center'>発行する年月を選択して下さい。</h6>
+                <div class = "form-group">
+                    {{Form::selectRange('year', 2020, 2022, old('year'), ['class' => 'form-control', 'placeholder'=>'年'])}}
+                </div>
+                <div class = "form-group">
+                    {{Form::selectRange('month', 1, 12, old('month'),['class' => 'form-control', 'placeholder'=>'月'])}}
+                </div>
+                <div class = "button-panel">
+                    {!! Form::submit('表示',['class'=>'btn']) !!}
+                </div>
             {!! Form::close() !!}
         </div>
- 
+    </div>
 @endsection
- 
+@push('css')
+    <link href="{{ asset('css/register.css') }}" rel="stylesheet">
+@endpush 

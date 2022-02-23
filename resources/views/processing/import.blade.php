@@ -1,6 +1,21 @@
 @extends('layouts.app2')
 @section('content')
-    <div class='container'>
+    <div class='form-wrapper'>
+        <h1>一括入出庫処理</h1>
+        <h4>CSVファイルを選択して下さい</h4>
+        
+        <div class = "form">
+            {{Form::open(['url' => route('stocks.import'), 'method' => 'post','enctype' => 'multipart/form-data'])}}
+                {{ csrf_field() }}
+                <input type='file' name='csv_file' id='csv_file'>
+                <div class='button-panel'>
+                    <button type='submit' class='btn'>保存</button>
+                </div>
+            {{Form::close()}}
+        </div>
+    </div>
+    
+        {{--<div class='container'>
         <div class='content'>
             <div class='title'>
                 一括入出庫処理
@@ -25,5 +40,8 @@
             <!-- </form> -->
             {{Form::close()}}
         </div>
-    </div>
+    </div>--}}
 @endsection
+@push('css')
+    <link href="{{ asset('css/register.css') }}" rel="stylesheet">
+@endpush

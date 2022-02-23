@@ -13,6 +13,7 @@ use Goodby\CSV\Import\Standard\LexerConfig;
 use App\Stock;
 use App\Historie;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 class StocksController extends Controller
 {
     //入庫処理
@@ -120,8 +121,6 @@ class StocksController extends Controller
             //$itemid = BaseClass::itemId($request,$i);
             $item=\App\Item::where('item_name',$request->item_code[$i])->first();
             
-            //dd($item->id);
-            
             $itemid = $item['id']; 
             //$itemid=optional($item)->id; 
 
@@ -155,6 +154,7 @@ class StocksController extends Controller
     //出庫処理
     public function out(Request $request,$id){
         Log::debug('出庫');
+        /*複数明細用に変更する。
         //バリデーション
         $this->validate($request,[
             'date'=>'required|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
@@ -162,6 +162,60 @@ class StocksController extends Controller
             'item_code'=>'required',
             'quantity'=>'required|integer|digits_between:1,2147483647']);
         //投入された値から、DBに保存する値を求め、その値をDBに保存する。
+        */
+        $validator = Validator::make($request->all(),[]);
+        $validator->validate();
+        
+        $j = 0;
+        foreach((array)$request->quantity as $value){
+            if ( $request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] != 0) {
+                $validator->errors()->add('', ($j+1) .'行目の出荷日が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+                //exit(($j+1) .'行目の出荷日が入力されていません。');
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の得意先が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の品目コードが入力されていま。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と得意先コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の得意先コードと品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の得意先コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] != 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と得意先コードと品目コードが入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] == null && $request->item_code[$j] != null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と得意先コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の出荷日と品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }elseif($request->date[$j] != null && $request->customer_code[$j] == null && $request->item_code[$j] == null && $request->quantity[$j] == 0){
+                $validator->errors()->add('', ($j+1) .'行目の得意先コードと品目コードと数量が入力されていません。');
+                return back()->withInput()->withErrors($validator);
+            }
+            else{
+                $j++;
+            }
+        }
         $warehouse=\App\Warehouse::find($id);
         $itemid = BaseClass::itemId($request,$id);
         $customerid = BaseClass::customerId($request,$id);
@@ -206,17 +260,18 @@ class StocksController extends Controller
             array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
             
             //出庫可能な在庫が有れば、DBに値を保存する。
-            if($sum <= $request->quantity){
+            if($sum <= $request->quantity[$i]){
                 return back()->with('flash_message','在庫数量以上の出庫はできません。');
             }else{
                 $history = new \App\Historie();
                 $history->stocks_id=$stock_id;
                 $history->inout=2;
-                $history->date=$request->date;
-                $history->quantity=$request->quantity;
+                $history->date=$request->date[$i];
+                $history->quantity=$request->quantity[$i];
                 $history->customer_id=$customerid;
                 $history->change_status='可';
                 $history->save();
+                $i++;
                 return back()->with('flash_message','出庫完了しました。');
             }
         }
@@ -246,7 +301,7 @@ class StocksController extends Controller
                         ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
                         ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
                         ->where('warehouse_id', $warehouse->id)
-                        ->dump()
+                        //->dump()
                         ->paginate(15);
         
         //入出庫計算
@@ -254,7 +309,7 @@ class StocksController extends Controller
         //前回値
         $OldwareHouse='';
         $Olditem='';
-        $sum=0;
+        $sum = 0;
     
         foreach($inoutSums as $inoutSum) {
             //１件目はイコールとする
@@ -281,9 +336,23 @@ class StocksController extends Controller
                 $sum = $sum + $this->inoutVal($inoutSum->inout,$inoutSum->sum);
             }
         }
+        
         //前回の倉庫名＋品種名＋SUM　を　連想配列$inoutDatasへ格納
         array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
         
+        /*$inoutDatas = new \LengthAwarePaginator(
+            $inoutDatas->forPage($request->page, 20),
+            count($inoutDatas),
+            20,
+            $request->page,
+            array('path' => $request->url())
+        );
+        array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
+        $all_num=count($inoutDatas);
+        $disp_limit = 20;
+        $inoutDatas = new LengthAwarePaginator($inoutDatas , $all_num, $disp_limit, $page, array('path'=>'/player'));
+        */
+        //dd($inoutDatas);
         $data=[
             'inoutDatas' => $inoutDatas,
             'id'=>$id,];
