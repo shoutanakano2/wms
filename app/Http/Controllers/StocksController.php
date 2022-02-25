@@ -19,39 +19,29 @@ class StocksController extends Controller
     //入庫処理
     public function store(Request $request,$id){
         Log::debug('入庫');
-        /*
-        //バリデーション
-        $this->validate($request,[
-            //'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
+        /*$this->validate($request,[
+            'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
             'customer_code'=>'required',
             'item_code'=>'required',
-            //'quantity'=>'required|numeric|between:1,2147483647']);
-        // 通常のバリデーション
-        //$validator = Validator::make($request->all(), [
-	        //現在のばーりでーしょんのまま
-            //'date'=>'required|after:Carbon::now()->startOfMonth()->toDateString()',
-            //'customer_code'=>'required',
-            //'item_code'=>'required',
-            //'quantity'=>'required|numeric|between:1,2147483647']);
-        //$validator->validate();
-        // 追加で入力チェックを行う
-        //if ( $validator->fails() ) {
-            //$validator->errors()->add('feed_url', 'このURLにはRSSフィードが含まれていません。');
-            //return back()->withInput()->withErrors($validator);
-        //}
-        //投入された値から、DBに保存する値を求る。
-       
+            $validator = Validator::make($request->all(), [
+                'date'=>'required|after:Carbon::now()->startOfMonth()->toDateString()',
+                'quantity'=>'required|numeric|between:1,2147483647']);
+        $validator->validate();
+        追加で入力チェックを行う
+        if ( $validator->fails() ) {
+            $validator->errors()->add('feed_url', 'このURLにはRSSフィードが含まれていません。');
+            return back()->withInput()->withErrors($validator);}
+        投入された値から、DBに保存する値を求る。
         $validator =$request->validate([
-            //'quantity.*' => 'required_with:item_code.*|numeric|between:0,2147483647',
+            'quantity.*' => 'required_with:item_code.*|numeric|between:0,2147483647',
              'quantity.*' => 'required|Integer',
              'customer_code.*'=>'required',
             'item_code.*'=>'required',
-        ]);
-    */
+        ]);*/
+        
         $validator = Validator::make($request->all(),[]);
         $validator->validate();
         $warehouse=\App\Warehouse::find($id);
-        
         $j = 0;
         foreach((array)$request->quantity as $value){
             if ( $request->date[$j] == null && $request->customer_code[$j] != null && $request->item_code[$j] != null && $request->quantity[$j] != 0) {
@@ -105,64 +95,42 @@ class StocksController extends Controller
         
         $i = 0;
         foreach((array)$request->quantity as $val){
-           //バリデーション
-           /*
-            $this->validate($request,[
-                'date'=>'required|date|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
-                'customer_code'=>'required',
-                'item_code'=>'required',
-                'quantity'=>'required|numeric|between:1,2147483647']);
-        
-            */
-            
-            if($val=="0"){
-                return back()->with('flash_message','入庫完了しました。');
+            if((array)$request->quantity[0]==null){
+                return back()->with('flash_message','１行目から入力して下さい。');
+            }elseif($val==null){
+                return back()->with('message','入庫処理完了しました。');
             }else{
             //$itemid = BaseClass::itemId($request,$i);
             $item=\App\Item::where('item_name',$request->item_code[$i])->first();
-            
             $itemid = $item['id']; 
-            //$itemid=optional($item)->id; 
-
             $customerid = BaseClass::customerId($request,$id,$i);
       
             //倉庫と品目の組み合わせがなければ、作成し、その変数を取得する。
             $stock ='';
             if ($warehouse->matched($itemid)) {
-            } else {
+            } 
+            else {
                 $stock = $warehouse->having()->attach($itemid);
             }
             $stock_id = BaseClass::stockId($warehouse,$itemid);
-            
-            //DBに値を保存する。
             $history = new \App\Historie();
             $history->stocks_id = $stock_id;
             $history->inout=1;
-            $history->date=$request->date[$i];
-            $history->quantity=$request->quantity[$i];
-            $history->customer_id=$customerid;
+            $history->date = $request->date[$i];
+            $history->quantity = $request->quantity[$i];
+            $history->customer_id = $customerid;
             $history->change_status='可';
             $history->save();
             $i++;
             }
         }
-        
-        //====================================================
         return back()->with('flash_message','入庫完了しました。');
     }
     
     //出庫処理
     public function out(Request $request,$id){
         Log::debug('出庫');
-        /*複数明細用に変更する。
         //バリデーション
-        $this->validate($request,[
-            'date'=>'required|after_or_equal:' . Carbon::now()->startOfMonth()->toDateString(),
-            'customer_code'=>'required',
-            'item_code'=>'required',
-            'quantity'=>'required|integer|digits_between:1,2147483647']);
-        //投入された値から、DBに保存する値を求め、その値をDBに保存する。
-        */
         $validator = Validator::make($request->all(),[]);
         $validator->validate();
         
@@ -216,65 +184,96 @@ class StocksController extends Controller
                 $j++;
             }
         }
-        $warehouse=\App\Warehouse::find($id);
-        $itemid = BaseClass::itemId($request,$id);
-        $customerid = BaseClass::customerId($request,$id);
         
-        //入庫したことのない品目か、出庫処理できる在庫があるか確認する。、
-        if($warehouse->matchedStock($itemid)->first()==Null){
-            return back()->with('flash_message','在庫が有りません。');
-        }else{
-            $stock_id = BaseClass::stockId($warehouse,$itemid);
-            $inoutSums = \DB::table('histories')
-                ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
-                ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
-                ->join('items', 'items.id', '=', 'stocks.item_id')
-                ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
-                ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
-                ->where('warehouse_id', $warehouse->id)
-                ->where('item_id',$itemid)
-                ->get();
-            
-            $inoutDatas=[];
-            $OldwareHouse='';
-            $Olditem='';
-            $sum=0;
-            foreach($inoutSums as $inoutSum) {
-                if($OldwareHouse=='') {
-                    $OldwareHouse = $inoutSum->warehouse_name;
-                    $Olditem = $inoutSum->item_name;
+        //１行目がブランクであれば、エラー表示
+        if((array)$request->quantity[0]==null){
+                return back()->with('flash_message','１行目から入力して下さい。');
+        }
+        
+        //空白行の$itemidや$cusomeridの値がエラー発生させるため、ループ回数を必要最低限にする。
+        $quantity = $request->quantity;
+        if($request->date[1] == null && $request->customer_code[1] == null && $request->item_code[1] == null && $request->quantity[1] == 0){
+            array_splice($quantity,1);  //1行目のみ入力された場合
+        }
+        elseif ($request->date[2] == null && $request->customer_code[2] == null && $request->item_code[2] == null && $request->quantity[2] == 0) {
+            array_splice($quantity,2);  //2行入力された場合
+        }
+        else{
+            array_splice($quantity,3);  //3行入力された場合
+        }
+        
+        $i = 0;
+        foreach((array)$quantity as $val){
+            $warehouse=\App\Warehouse::find($id);
+            $itemid = BaseClass::itemId($request,$id,$i);
+            $customerid = BaseClass::customerId($request,$id,$i);
+            $item=\App\Item::where('item_name',$request->item_code[$i])->first();
+            $itemid = $item['id'];
+            //入庫したことのない品目か、出庫処理できる在庫があるか確認する。、
+            if($warehouse->matchedStock($itemid)->first()==Null){
+                if($i == 0){
+                    return back()->with('flash_message','１行目の商品は、在庫がありません。');
+                }elseif($i==1){
+                    return back()->with('flash_message','２行目の商品は、在庫がありません。１行目は入庫処理完了しました。');
+                }elseif($i==2){
+                    return back()->with('flash_message','３行目の商品は、在庫がありません。２行目は入庫処理完了しました。');
                 }
-                if($OldwareHouse != $inoutSum->warehouse_name) {
-                    array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum]);
-                    $sum = $this->inoutVal($inoutSum->inout,$inoutSum->sum);
-                    $OldwareHouse = $inoutSum->warehouse_name;
-                    $Olditem = $inoutSum->item_name;
-                } elseif($Olditem != $inoutSum->item_name){
-                    array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum]);
-                    $sum = $this->inoutVal($inoutSum->inout,$inoutSum->sum);
-                    $Olditem = $inoutSum->item_name;
-                } else {
-                    $sum = $sum + $this->inoutVal($inoutSum->inout,$inoutSum->sum);
-                }
-            }
-            array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
-            
-            //出庫可能な在庫が有れば、DBに値を保存する。
-            if($sum <= $request->quantity[$i]){
-                return back()->with('flash_message','在庫数量以上の出庫はできません。');
             }else{
-                $history = new \App\Historie();
-                $history->stocks_id=$stock_id;
-                $history->inout=2;
-                $history->date=$request->date[$i];
-                $history->quantity=$request->quantity[$i];
-                $history->customer_id=$customerid;
-                $history->change_status='可';
-                $history->save();
-                $i++;
-                return back()->with('flash_message','出庫完了しました。');
+                $stock_id = BaseClass::stockId($warehouse,$itemid);
+                $inoutSums = \DB::table('histories')
+                    ->select(\DB::raw('sum(histories.quantity)as sum,histories.inout,stocks.item_id,stocks.warehouse_id,warehouses.warehouse_name,items.item_name'))
+                    ->join('stocks', 'stocks.id', '=', 'histories.stocks_id')
+                    ->join('items', 'items.id', '=', 'stocks.item_id')
+                    ->join('warehouses', 'warehouses.id', '=', 'stocks.warehouse_id')
+                    ->groupBy('warehouses.warehouse_name','items.item_name','stocks.item_id','stocks.warehouse_id','histories.inout')
+                    ->where('warehouse_id', $warehouse->id)
+                    ->where('item_id',$itemid)
+                    ->get();
+                $inoutDatas=[];
+                $OldwareHouse='';
+                $Olditem='';
+                $sum=0;
+                foreach($inoutSums as $inoutSum) {
+                    if($OldwareHouse=='') {
+                        $OldwareHouse = $inoutSum->warehouse_name;
+                        $Olditem = $inoutSum->item_name;
+                    }
+                    if($OldwareHouse != $inoutSum->warehouse_name) {
+                        array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum]);
+                        $sum = $this->inoutVal($inoutSum->inout,$inoutSum->sum);
+                        $OldwareHouse = $inoutSum->warehouse_name;
+                        $Olditem = $inoutSum->item_name;
+                    } elseif($Olditem != $inoutSum->item_name){
+                        array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum]);
+                        $sum = $this->inoutVal($inoutSum->inout,$inoutSum->sum);
+                        $Olditem = $inoutSum->item_name;
+                    } else {
+                        $sum = $sum + $this->inoutVal($inoutSum->inout,$inoutSum->sum);
+                    }
+                }
+                array_push($inoutDatas,['wareHouse'=>$OldwareHouse,'item' => $Olditem,'sum'=>$sum ]);
+                
+                //出庫可能な在庫が有れば、DBに値を保存する。
+                if($sum <= $request->quantity[$i] && $i == 0){
+                    return back()->with('flash_message','１行目は、在庫数量以上の出庫はできません。');
+                }elseif($sum <= $request->quantity[$i] && $i == 1){
+                    return back()->with('flash_message','２行目は、在庫数量以上の出庫はできません。１行目は出庫処理完了しました。');
+                }elseif($sum <= $request->quantity[$i] && $i == 2){
+                    return back()->with('flash_message','３行目は、在庫数量以上の出庫はできません。２行目迄出庫処理完了しました。');
+                }else{
+                    $history = new \App\Historie();
+                    $history->stocks_id=$stock_id;
+                    $history->inout=2;
+                    $history->date=$request->date[$i];
+                    $history->quantity=$request->quantity[$i];
+                    $history->customer_id=$customerid;
+                    $history->change_status='可';
+                    $history->save();
+                    $i++;
+                }
             }
         }
+        return back()->with('message','出庫完了しました。');
     }
     
     //入出庫処理する倉庫を選択する。
@@ -619,7 +618,7 @@ class StocksController extends Controller
             return back()->with('flash_message','在庫数が不足するため取り消しできません。');
         }elseif(\Auth::id()==$userid->user_id && $history->change_status=='可' ){
             $history->delete();
-            return back()->with('flash_message','取り消し完了しました。');
+            return back()->with('message','取り消し完了しました。');
         }else{
             return back()->with('flash_message','取り消しできません。');
         }

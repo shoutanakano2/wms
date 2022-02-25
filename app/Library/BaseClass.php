@@ -39,10 +39,8 @@ class BaseClass
     
     //StocksController@store,out
     public static function itemId($request,$i){
-     
         $item=\App\Item::where('item_name',$request->item_code[$i])->first();
-        $itemid=$item->id;
-        dd($item);
+        $itemid=optional($item)->id;
         return $itemid;
     }
     
@@ -50,6 +48,7 @@ class BaseClass
     public static function customerId($request,$id,$i){
         $customer=\App\Customer::where('customer_name',$request->customer_code[$i])->first();
         $customerid=optional($customer)->id;
+        //https://qiita.com/nunulk/items/c551b8fe18305ecdd908
         return $customerid;
     }
     
@@ -60,8 +59,6 @@ class BaseClass
         //$stock_id=$stock->id;
         //$stock = $warehouse->matchedStock($itemid)->first()->pivot;
         $item = $warehouse->matchedStock($itemid)->first();
- //dd($stock);       
-        //dd($stock);
         //$stock_id=$stock->id;
         $stock_id=$item['stock_id'];
         

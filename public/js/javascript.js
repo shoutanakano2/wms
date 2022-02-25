@@ -66,3 +66,10 @@ $(window).resize(function(){
 $(window).on('load',function(){
     mediaQueriesWin();
 });
+
+$(function(){
+    $('.message').fadeOut(3000);
+});
+$(function(){
+    $('.flash_message').fadeOut(3000);
+});

@@ -29,7 +29,8 @@
                 </div>
             </div>
         </header>
-        <div id = "container">
+        
+        {{--<div id = "container">
             <header id = "header">
                 @if(Auth::check())
                     <h1>メニュー</h1>
@@ -38,10 +39,10 @@
                             <li><a href = "/">トップページ</a></li>
                             <li class="has-child"><a href = "#">マスタ関連</a>
                                 <ul>
-                                    <li><a href = "{{route('warehouses.create')}}">倉庫マスタ作成</a></li>
-                                    <li><a href = "{{route('warehouses.index')}}">倉庫マスタ一覧</a></li>
-                                    <li><a href = "{{route('items.create')}}">品目マスタ作成</a></li>
-                                    <li><a href = "{{route('items.index')}}">品目マスタ一覧</a></li>
+                                    <li><a href = "{{ route('warehouses.create')}}">倉庫マスタ作成</a></li>
+                                    <li><a href = "{{ route('warehouses.index')}}">倉庫マスタ一覧</a></li>
+                                    <li><a href = "{{ route('items.create')}}">品目マスタ作成</a></li>
+                                    <li><a href = "{{ route('items.index')}}">品目マスタ一覧</a></li>
                                     <li><a href = "{{ route('customers.create') }}">得意先マスタ作成</a></li>
                                     <li><a href = "{{ route('customers.list') }}">得意先マスタ一覧</a></li>
                                 </ul>
@@ -63,8 +64,8 @@
                         </ul>
                     </nav>
                 @else
-                    {{--<h2 class="m-4">倉庫管理<br>システム</h2>--}}
-                    <div class='m-3'>
+                                                           {{--<h2 class="m-4">倉庫管理<br>システム</h2>--}}
+                    {{--<div class='m-3'>
                         {!! link_to_route('signup.get','会員登録',[],['class'=>'btn btn-lg btn-primary']) !!}
                     </div>
                     <div class='m-3'>
@@ -86,8 +87,82 @@
                     @yield('content')
                 </section>
             </main>
-        </div>
-        
+        </div>--}}
+        @if(Auth::check())
+            <div id = "container">
+                <header id = "header">
+                    <h1>メニュー</h1>
+                    <nav>
+                        <ul>
+                            <li><a href = "/">トップページ</a></li>
+                            <li class="has-child"><a href = "#">マスタ関連</a>
+                                <ul>
+                                    <li><a href = "{{ route('warehouses.create')}}">倉庫マスタ作成</a></li>
+                                    <li><a href = "{{ route('warehouses.index')}}">倉庫マスタ一覧</a></li>
+                                    <li><a href = "{{ route('items.create')}}">品目マスタ作成</a></li>
+                                    <li><a href = "{{ route('items.index')}}">品目マスタ一覧</a></li>
+                                    <li><a href = "{{ route('customers.create') }}">得意先マスタ作成</a></li>
+                                    <li><a href = "{{ route('customers.list') }}">得意先マスタ一覧</a></li>
+                                </ul>
+                            </li>
+                            <li class = "has-child"><a href = "#">入出庫処理</a>
+                                <ul>
+                                    <li><a href = "{{ route('warehouses.inselect') }}">入庫処理</a></li>
+                                    <li><a href = "{{ route('warehouses.outselect') }}">出庫処理</a></li>
+                                    <li><a href = "{{ route('stocks.inoutfile') }}">一括処理</a></li>
+                                </ul>
+                            </li>
+                            <li class = "has-child"><a href = "#">在庫管理</a>
+                                <ul>
+                                    <li><a href = "{{ route('warehouses.stocksSelect') }}">在照庫会</a></li>
+                                    <li><a href = "{{ route('warehouses.historiesSelect') }}">入出庫履歴照会</a></li>
+                                </ul>
+                            </li>
+                            <li><a href = "{{ route('customers.index') }}">請求書発行</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                <main id = "main-area">
+                    <section id = "area-1">
+                        @if (session('flash_message'))
+                            <div class='flash_message text-center alert alert-danger m-2' role='alert'>
+                                {{ session('flash_message') }}
+                            </div>
+                        @endif
+                        @if (Session::has('message'))
+                            <div class = "message bg-success text-center py-3 my-0">
+                                <p>{{ session('message') }}</p>
+                            </div>
+                            
+                        @endif
+                        @include('commons.error_messages')
+                        @yield('content')
+                    </section>
+                </main>
+            </div>
+        @else
+            <div class = "container">
+                        @if (session('flash_message'))
+                            <div class='flash_message alert alert-danger m-2' role='alert'>
+                                {{ session('flash_message') }}
+                            </div>
+                        @endif
+                        @if (Session::has('message'))
+                            <p>{{ session('message') }}</p>
+                        @endif
+                        @include('commons.error_messages')
+                        @yield('content')
+
+            </div>
+            {{--
+                    <div class='m-3'>
+                        {!! link_to_route('signup.get','会員登録',[],['class'=>'btn btn-lg btn-primary']) !!}
+                    </div>
+                    <div class='m-3'>
+                        {!! link_to_route('login','ログイン',[],['class'=>'btn btn-lg btn-primary']) !!}
+                    </div>
+            --}}
+        @endif
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
         <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"></script>

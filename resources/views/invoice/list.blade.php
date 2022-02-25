@@ -88,7 +88,7 @@
                     <tr>
                         <td class="space" rowspan="3" colspan="2"> </td>
                         <th> 小計 </th>
-                        <td> 2,008,000 </td>
+                        <td> {!! number_format(intval($subtotal)) !!} </td>
                     </tr>
                     <tr>
                         <th> 消費税 </th>
