@@ -5,10 +5,15 @@
 .carousel slide{
     position: relative;
 }
+.carousel .carousel-inner button{
+    border: none;
+    outline: none;
+    background: transparent;
+}
 
 .carousel .carousel-inner button .signup {
     position: absolute;
-    color: white;
+    color: #FE654F;
     display: block;
     font-weight: bold;
     font-size: 2em;
@@ -29,7 +34,7 @@
 
 .carousel .carousel-inner button .login {
     position: absolute;
-    color: white;
+    color: #FE654F;
     display: block;
     font-weight: bold;
     font-size: 2em;
@@ -37,6 +42,7 @@
     left: 50%;
     top: 55%;
 }
+
 
 .carousel div{
     width: 100%
@@ -54,4 +60,12 @@
     left: 50%;
     margin:0;
     padding:0;
+}
+.d-block{
+    height: 600px;
+    width: 960px;
+}
+
+body{
+    background-color: #F5F5F5;
 }

@@ -4,50 +4,48 @@
     <div id="carouselExampleControls" class="carousel slide" data-ride="carousel" data-interval="2500" data-pause="hover">
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img src="/images/inside.gif" class="d-block w-100" alt="truck">
+          <img src="/images/folk.svg" class="d-block w-100" alt="truck">
         </div>
         <div class="carousel-item">
-          <img src="/images/outside-warehouse.gif" class="d-block w-100" alt="warehouse">
+          <img src="/images/daisya.svg" class="d-block w-100" alt="daisya">
         </div>
         <div class="carousel-item">
-          <img src="/images/folk.gif" class="d-block w-100" alt="folklift">
+          <img src="/images/check.svg" class="d-block w-100" alt="check">
         </div>
       </div>
-      <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+      {{--<a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="sr-only">Previous</span>
       </a>
       <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="sr-only">Next</span>
-      </a>
+      </a>--}}
     </div>
   @else
-        <div id="carouselExampleControls" class="carousel slide" data-ride="carousel" data-interval="2500" data-pause="hover">
+    <div id="carouselExampleControls" class="carousel slide" data-ride="carousel" data-interval="2500" data-pause="hover">
       <div class="carousel-inner">
         <div class="carousel-item active">
-          <img src="/images/inside.gif" class="d-block w-100" alt="truck">
+          <img src="/images/folk.svg" class="d-block w-100" alt="folk">
+          {{--<img src="/images/inside.gif" class="d-block w-100" alt="truck">--}}
         </div>
         <div class="carousel-item">
-          <img src="/images/outside-warehouse.gif" class="d-block w-100" alt="warehouse">
+          <img src="/images/daisya.svg" class="d-block w-100" alt="daisya">
         </div>
         <div class="carousel-item">
-          <img src="/images/folk.gif" class="d-block w-100" alt="folklift">
+          <img src="/images/check.svg" class="d-block w-100" alt="check">
         </div>
-        
         <button>{!! link_to_route('signup.get','会員登録',[],['class'=>'signup']) !!}</button>
         <button>{!! link_to_route('login','ログイン',[],['class'=>'login']) !!}</button>
-        
-        //<a href = "{{ route('warehouses.stocksSelect') }}">
       </div>
-      <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+      {{--<a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="sr-only">Previous</span>
       </a>
       <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="sr-only">Next</span>
-      </a>
+      </a>--}}
     </div>
   @endif
   

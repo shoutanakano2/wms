@@ -5,24 +5,26 @@
         <title>wms</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/welcome.css">
         @yield('pageCss')
         @stack('css')
     </head>
 
-    <body class='bg-info'>
+    <body>
+    {{--<body class='bg-info'>--}}
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class='navbar-brand' href='#'>倉庫管理システム</a>
-            <button class="navbar-togger" type="button" data-togger="collapse" data-target="navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-togger-icon"></span>
-            </button>
+
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                  
                     <div class="navbar-nav">
-                        @if(Auth::check())
+                        @if(Auth::check())  
                             <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
                             <a class="nav-link" href="/logout">Logout</a>
                         @endif
                     </div>
+                    
                 </div>
             </div>
         </nav>
@@ -37,3 +39,6 @@
         <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js"></script>
     </body>
 </html>
+            {{--<button class="navbar-togger" type="button" data-togger="collapse" data-target="navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-togger-icon"></span>
+            </button>--}}
